@@ -27,19 +27,20 @@ import jv.supermarket.security.filters.FilterTokenJWT;
 @EnableWebSecurity
 public class WebSecurityConfig {
 
+    final FilterTokenJWT filterToken;
+    
+    WebSecurityConfig(FilterTokenJWT filterToken) {
+        this.filterToken = filterToken;
+    }
+
     @Bean
     BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    CustomUserDetailsService userDetailsService() {
-        return new CustomUserDetailsService();
-    }
-
-    @Bean
-    AuthenticationManager authManager() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService());
+    AuthenticationManager authManager(CustomUserDetailsService userDetailsService) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
 
         provider.setPasswordEncoder(passwordEncoder());
 
@@ -60,11 +61,8 @@ public class WebSecurityConfig {
         return source;
     }
 
-    @Autowired
-    FilterTokenJWT filterToken;
-
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http, CustomUserDetailsService userDetailsService) throws Exception {
         String url_auth = "/supermarket/auth/";
         String url_products = "/supermarket/product/";
         String url_stocks = "/supermarket/stock/";
@@ -160,7 +158,7 @@ public class WebSecurityConfig {
 
         http.cors(cors -> cors.configurationSource(corsConf()));
 
-        http.userDetailsService(userDetailsService());
+        http.userDetailsService(userDetailsService);
 
         return http.build();
     }
