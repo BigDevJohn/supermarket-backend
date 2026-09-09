@@ -1,7 +1,6 @@
 package jv.supermarket.product;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -153,7 +152,7 @@ public class ProductService {
             products = productRepository.findByNameContainingIgnoreCase(name, pageable);
         }
 
-        if (products.getTotalElements() == 0 || products == null) {
+        if (products.getTotalElements() == 0) {
             throw new ResourceNotFoundException("No products found with name: " + name);
         }
         return products.map(this::convertToDTO);
@@ -167,7 +166,7 @@ public class ProductService {
             products = productRepository.findByBrandContainingIgnoreCase(brand, pageable);
         }
 
-        if (products.getTotalElements() == 0 || products == null) {
+        if (products.getTotalElements() == 0) {
             throw new ResourceNotFoundException("No products found with brand: " + brand);
         }
         return products.map(this::convertToDTO);
@@ -194,7 +193,7 @@ public class ProductService {
         } else {
             products = productRepository.findByCategoryName(name, pageable);
         }
-        if (products.getTotalElements() == 0 || products == null) {
+        if (products.getTotalElements() == 0) {
             throw new ResourceNotFoundException("Products with category name: " + name + " not found");
         }
         return products.map(this::convertToDTO);

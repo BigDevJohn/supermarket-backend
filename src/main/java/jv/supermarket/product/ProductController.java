@@ -81,9 +81,6 @@ public class ProductController {
             @Parameter(description = "Product name to search for") @RequestParam String name,
             @PageableDefault(size = 20, sort = "name") Pageable pageable) {
         Page<ProductDTO> products = productService.getProductsByName(name, pageable);
-        if (products.getTotalElements() == 0 || products == null) {
-            throw new ResourceNotFoundException("No products found with name: " + name);
-        }
         return ResponseEntity.ok(products);
     }
 
