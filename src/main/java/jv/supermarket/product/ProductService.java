@@ -63,13 +63,15 @@ public class ProductService {
         product.setPrice(dto.getPrice());
         product.setDescription(dto.getDescription());
 
-        Stock stock = stockService.buildStock(dto.getStock(), product);
-
-        product.setStock(stock);
-
         addCategoriesToProduct(product, dto.getCategories());
 
-        return convertToDTO(productRepository.save(product));
+        // Persist product first so it gets an ID before Stock (which uses @MapsId) is created
+        Product savedProduct = productRepository.save(product);
+
+        Stock stock = stockService.buildStock(dto.getStock(), savedProduct);
+        savedProduct.setStock(stock);
+
+        return convertToDTO(productRepository.save(savedProduct));
     }
 
     private void addCategoriesToProduct(Product product, List<String> categories) {
