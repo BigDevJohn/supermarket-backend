@@ -1,54 +1,59 @@
 package jv.supermarket.product;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    Boolean existsByNameAndBrand(String name, String brand);
+       Boolean existsByNameAndBrand(String name, String brand);
 
-    boolean existsByIdAndAvailable(Long id, boolean available);
+       boolean existsByIdAndAvailable(Long id, boolean available);
 
-    Product findByIdAndAvailable(Long id, boolean available);
+       Product findByIdAndAvailable(Long id, boolean available);
 
-    List<Product> findAllByAvailable(boolean available);
+       Page<Product> findAllByAvailable(boolean available, Pageable pageable);
 
-    List<Product> findByName(String name);
+       Page<Product> findByName(String name, Pageable pageable);
 
-    List<Product> findByNameAndAvailable(String name, boolean available);
+       Page<Product> findByNameAndAvailable(String name, boolean available, Pageable pageable);
 
-    List<Product> findByBrand(String brand);
+       Page<Product> findByBrand(String brand, Pageable pageable);
 
-    List<Product> findByBrandAndAvailable(String brand, boolean available);
+       Page<Product> findByBrandAndAvailable(String brand, boolean available, Pageable pageable);
 
-    Product findByBrandAndName(String brand, String name);
+       Product findByBrandAndName(String brand, String name);
 
-    Product findByBrandAndNameAndAvailable(String brand, String name, boolean available);
+       Product findByBrandAndNameAndAvailable(String brand, String name, boolean available);
 
-    @Query("SELECT p FROM Product p JOIN FETCH p.categories c WHERE c.name = :name")
-    List<Product> findByCategoryName(@Param("name") String name);
+       @Query("""
+                     SELECT DISTINCT p
+                     FROM Product p
+                     JOIN p.categories c
+                     WHERE c.name = :name
+                            """)
+       Page<Product> findByCategoryName(@Param("name") String name, Pageable pageable);
 
-    @Query("SELECT p FROM Product p JOIN FETCH p.categories c WHERE c.name = :name AND p.available = :available")
-    List<Product> findByCategoryNameAndAvailable(@Param("name") String name, @Param("available") boolean available);
+       @Query("""
+                     SELECT DISTINCT p
+                     FROM Product p
+                     JOIN p.categories c
+                     WHERE c.name = :name
+                     AND p.available = :available
+                            """)
+       Page<Product> findByCategoryNameAndAvailable(
+                     @Param("name") String name,
+                     @Param("available") boolean available,
+                     Pageable pageable);
 
-    List<Product> findByNameContainingIgnoreCase(String name);
+       Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
-    List<Product> findByNameContainingIgnoreCaseAndAvailable(String name, boolean available);
+       Page<Product> findByNameContainingIgnoreCaseAndAvailable(String name, boolean available, Pageable pageable);
 
-    List<Product> findByBrandContainingIgnoreCase(String brand);
+       Page<Product> findByBrandContainingIgnoreCase(String brand, Pageable pageable);
 
-    List<Product> findByBrandContainingIgnoreCaseAndAvailable(String brand, boolean available);
-
-    @Query("SELECT DISTINCT p FROM Product p JOIN p.categories c " +
-           "WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    List<Product> findByCategoryNameContaining(@Param("name") String name);
-
-    @Query("SELECT DISTINCT p FROM Product p JOIN p.categories c " +
-           "WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')) " +
-           "AND p.available = true")
-    List<Product> findByCategoryNameContainingAndAvailable(@Param("name") String name);
+       Page<Product> findByBrandContainingIgnoreCaseAndAvailable(String brand, boolean available, Pageable pageable);
 
 }

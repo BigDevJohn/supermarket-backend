@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -95,14 +97,12 @@ public class OrderService {
         throw new AccessDeniedException("Order not found for this client");
     }
 
-    public Set<OrderDTO> getOrdersByUser() {
-        Set<Order> orders = orderRepo.findByUserId(userService.getLoggedUser().getId());
+    public Page<OrderDTO> getOrdersByUser(Pageable pageable) {
+        Page<Order> orders = orderRepo.findByUserId(userService.getLoggedUser().getId(), pageable);
         if (orders == null || orders.isEmpty()) {
             throw new ResourceNotFoundException("The user has no orders");
         }
-        return orders.stream()
-                .map(order -> convertOrderToDTO(order))
-                .collect(Collectors.toSet());
+        return orders.map(order -> convertOrderToDTO(order));
     }
 
     public Order getOrderById(Long id) {

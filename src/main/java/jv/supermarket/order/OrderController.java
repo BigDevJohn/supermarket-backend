@@ -1,8 +1,9 @@
 package jv.supermarket.order;
 
 import java.time.Instant;
-import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -81,12 +82,11 @@ public class OrderController {
                 array = @ArraySchema(schema = @Schema(implementation = OrderDTO.class)))),
         @ApiResponse(responseCode = "404",
             description = "User has no orders.",
-            content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiError.class)))
+            content = @Content(mediaType = "application/json"))
     })
     @GetMapping("by-user")
-    public ResponseEntity<Set<OrderDTO>> getOrdersByUser() {
-        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrdersByUser());
+    public ResponseEntity<Page<OrderDTO>> getOrdersByUser(Pageable pageable) {
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.getOrdersByUser(pageable));
     }
 
     @Operation(summary = "Cancels an order")

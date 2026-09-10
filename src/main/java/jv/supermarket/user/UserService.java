@@ -141,4 +141,10 @@ public class UserService {
         return userRepository.existsById(id);
     }
 
+    public boolean isClient() {
+        User user = getLoggedUser();
+        return user.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("ROLE_CLIENTE"));
+    }
+
 }
