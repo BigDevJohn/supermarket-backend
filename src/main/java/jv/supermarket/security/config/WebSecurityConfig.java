@@ -50,7 +50,7 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConf() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:5173"); // Domínio do frontend
+        config.addAllowedOrigin("http://localhost:4200"); // Domínio do frontend
         config.addAllowedHeader("*");
         config.setExposedHeaders(List.of("Authorization", "Content-Type"));
         config.addAllowedMethod("*");

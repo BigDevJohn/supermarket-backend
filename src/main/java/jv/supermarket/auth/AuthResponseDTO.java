@@ -1,6 +1,6 @@
 package jv.supermarket.auth;
 
-public record AuthResponseDTO(String nome, String token) {
+public record AuthResponseDTO(String name, String token) {
 } 
     
 
