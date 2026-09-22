@@ -45,7 +45,7 @@ public class RolesConfigInitializer implements CommandLineRunner {
     }
 
     private void createDefaultAdmin() {
-        String email = "admin@gmail.com";
+        String email = "admin@supermarket.local";
 
         if (!userService.existsByEmail(email)) {
             User admin = new User();
