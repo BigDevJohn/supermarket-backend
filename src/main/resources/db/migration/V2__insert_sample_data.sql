@@ -11,11 +11,11 @@ INSERT INTO role (id, name) VALUES
 
 INSERT INTO users (id, email, name, password) VALUES
     (1, 'admin@supermarket.local', 'Administrator',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llCz0x2xqQ6xJ6c6b4K7W'),
+     '$2a$10$QGanebpp/Z/M7L2hAU0H2Ohfk7IUFTau/QiwiRu8tkkdaq73gkl/.'),
     (2, 'customer@supermarket.local', 'John Customer',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llCz0x2xqQ6xJ6c6b4K7W'),
+     '$2a$10$4m0YL8OULRg7CMOeSiJIb.y97AmFGDQ1VDZlMHYnkBOc3tiea3TMO'),
     (3, 'employee@supermarket.local', 'Jane Employee',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llCz0x2xqQ6xJ6c6b4K7W');
+     '$2a$10$CFjxInfjA1G5CwDji3STjeAe1jzfcn8u8Q.8WXYbDMNNK6JCGKhkG');
 
 INSERT INTO category (id, name) VALUES
     (1, 'Beverages'),
