@@ -10,10 +10,10 @@ public class ProductRequestDTO {
     private BigDecimal price;
     private String description;
     private int stock;
-    private List<String> categories;
+    private List<Long> categories;
 
     public ProductRequestDTO(String name, String brand, BigDecimal price, int stock, String description,
-            List<String> categories) {
+            List<Long> categories) {
         this.name = name;
         this.brand = brand;
         this.price = price;
@@ -54,11 +54,11 @@ public class ProductRequestDTO {
         this.description = description;
     }
 
-    public List<String> getCategories() {
+    public List<Long> getCategories() {
         return categories;
     }
 
-    public void setCategories(List<String> categories) {
+    public void setCategories(List<Long> categories) {
         this.categories = categories;
     }
 

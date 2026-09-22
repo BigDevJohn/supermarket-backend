@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 import jv.supermarket.cart.Cart;
 import jv.supermarket.cart.CartRepository;
-import jv.supermarket.shared.customexception.AlreadyExistException;
+import jv.supermarket.shared.customexception.BadAuthRequestException;
 import jv.supermarket.shared.customexception.ResourceNotFoundException;
 
 @Service
@@ -35,7 +35,7 @@ public class UserService {
     @Transactional
     public User saveClient(User user) {
         if (existsByEmail(user.getEmail())) {
-            throw new AlreadyExistException("A user with this email already exists");
+            throw new BadAuthRequestException("Registration failed: invalid data provided");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
@@ -55,7 +55,7 @@ public class UserService {
     @Transactional
     public User saveAdmin(User user) {
         if (existsByEmail(user.getEmail())) {
-            throw new AlreadyExistException("A user with this email already exists");
+            throw new BadAuthRequestException("Registration failed: invalid data provided");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
@@ -68,7 +68,7 @@ public class UserService {
     @Transactional
     public User saveEmployee(User user) {
         if (existsByEmail(user.getEmail())) {
-            throw new AlreadyExistException("A user with this email already exists");
+            throw new BadAuthRequestException("Registration failed: invalid data provided");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 

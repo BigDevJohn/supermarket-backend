@@ -52,7 +52,7 @@ public class AuthController {
 
         if (passwordEncoder.matches(dto.password(), user.getPassword())) {
             String token = tokenService.generateToken(user);
-            return ResponseEntity.status(HttpStatus.OK).body(new AuthResponseDTO(user.getName(), token));
+            return ResponseEntity.status(HttpStatus.OK).body(new AuthResponseDTO(token));
         }
         throw new BadAuthRequestException("Login failed: incorrect email or password");
     }
@@ -72,6 +72,6 @@ public class AuthController {
     public ResponseEntity<AuthResponseDTO> registerClient(@RequestBody @Valid User user) {
         User savedUser = userService.saveClient(user);
         String token = tokenService.generateToken(savedUser);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponseDTO(savedUser.getName(), token));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponseDTO(token));
     }
 }

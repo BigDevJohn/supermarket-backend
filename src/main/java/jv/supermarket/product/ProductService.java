@@ -72,14 +72,11 @@ public class ProductService {
         return convertToDTO(productRepository.save(product));
     }
 
-    private void addCategoriesToProduct(Product product, List<String> categories) {
-        for (String categoryName : categories) {
-            if (categoryRepository.existsByName(categoryName)) {
-                Category category = categoryRepository.findByName(categoryName);
-                product.getCategories().add(category);
-            } else {
-                throw new ResourceNotFoundException("Category with name: " + categoryName + " not found");
-            }
+    private void addCategoriesToProduct(Product product, List<Long> categoryIds) {
+        for (Long categoryId : categoryIds) {
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Category with id: " + categoryId + " not found"));
+            product.getCategories().add(category);
         }
     }
 
@@ -207,7 +204,6 @@ public class ProductService {
         dto.setBrand(product.getBrand());
         dto.setPrice(product.getPrice());
         dto.setDescription(product.getDescription());
-        dto.setAvailable(product.isAvailable());
 
         // Convert Set<Category> → Set<String>
         Set<String> categoryNames = product.getCategories().stream()

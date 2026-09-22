@@ -15,7 +15,7 @@ public class ProductDTO {
     private String brand;
     private BigDecimal price;
     private String description;
-    private Boolean available;
+
     private Set<String> categories = new HashSet<>();
     private List<ImageDTO> images = new ArrayList<>();
 
@@ -62,13 +62,6 @@ public class ProductDTO {
         this.description = description;
     }
 
-    public Boolean getAvailable() {
-        return available;
-    }
-
-    public void setAvailable(Boolean available) {
-        this.available = available;
-    }
 
     public Set<String> getCategories() {
         return categories;
