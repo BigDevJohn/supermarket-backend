@@ -2,6 +2,7 @@ package jv.supermarket.config;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 
 import jv.supermarket.user.Role;
@@ -11,6 +12,7 @@ import jv.supermarket.user.UserService;
 
 @Configuration
 @Order(1)
+@Profile("test")
 public class RolesConfigInitializer implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
@@ -25,8 +27,8 @@ public class RolesConfigInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         createRoleIfNotExists("ROLE_ADMIN");
-        createRoleIfNotExists("ROLE_FUNCIONARIO");
-        createRoleIfNotExists("ROLE_CLIENTE");
+        createRoleIfNotExists("ROLE_EMPLOYEE");
+        createRoleIfNotExists("ROLE_CUSTOMER");
 
         createDefaultAdmin();
     }

@@ -87,7 +87,7 @@ public class WebSecurityConfig {
                 ).permitAll()
                 
                 .requestMatchers(HttpMethod.GET, url_products+"**")
-                    .hasAnyRole("ADMIN", "FUNCIONARIO", "CLIENTE")
+                    .hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
                 .requestMatchers(HttpMethod.POST, url_products + "save")
                     .hasRole("ADMIN")
                     
@@ -97,12 +97,12 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, url_products + "**")
                     .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, url_products+"{id:\\d+}/**")
-                    .hasAnyRole("ADMIN", "FUNCIONARIO")
+                    .hasAnyRole("ADMIN", "EMPLOYEE")
 
                 .requestMatchers(HttpMethod.GET, url_stocks+"**")
-                    .hasAnyRole("ADMIN", "FUNCIONARIO", "CLIENTE")
+                    .hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
                 .requestMatchers(HttpMethod.PUT, url_stocks+"{id:\\d+}/**")
-                    .hasAnyRole("ADMIN", "FUNCIONARIO")
+                    .hasAnyRole("ADMIN", "EMPLOYEE")
 
                 
                 .requestMatchers(HttpMethod.POST, url_categories + "save")
@@ -112,7 +112,7 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, url_categories +"{id:\\d+}")
                     .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, url_categories +"**")
-                    .hasAnyRole("ADMIN", "CLIENTE", "FUNCIONARIO")
+                    .hasAnyRole("ADMIN", "CUSTOMER", "EMPLOYEE")
                     
                 .requestMatchers(HttpMethod.POST, url_images+"upload")
                     .hasRole("ADMIN")
@@ -121,27 +121,27 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, url_images +"{id:\\d+}")
                     .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, url_images+"**")
-                    .hasAnyRole("ADMIN", "FUNCIONARIO", "CLIENTE")
+                    .hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
                     
                 .requestMatchers(HttpMethod.GET, url_carts+"show")
-                    .hasRole("CLIENTE")
+                    .hasRole("CUSTOMER")
                 .requestMatchers(HttpMethod.POST, url_carts+"addItem/{itemId:\\d+}")
-                    .hasRole("CLIENTE")
+                    .hasRole("CUSTOMER")
                 .requestMatchers(HttpMethod.DELETE, url_carts+"removeItem/{itemId:\\d+}")
-                    .hasRole("CLIENTE")
+                    .hasRole("CUSTOMER")
                 .requestMatchers(HttpMethod.PUT, url_carts+"item/{itemId:\\d+}/update")
-                    .hasRole("CLIENTE")
+                    .hasRole("CUSTOMER")
                 .requestMatchers(HttpMethod.DELETE, url_carts+"clear")
-                    .hasRole("CLIENTE")
+                    .hasRole("CUSTOMER")
                     
                 .requestMatchers(HttpMethod.POST, url_orders+"create")
-                    .hasRole("CLIENTE")
+                    .hasRole("CUSTOMER")
                 .requestMatchers(HttpMethod.GET, url_orders+"{id:\\d+}")
-                    .hasAnyRole("ADMIN","CLIENTE")
+                    .hasAnyRole("ADMIN","CUSTOMER")
                 .requestMatchers(HttpMethod.GET, url_orders+"by-user")
-                    .hasRole("CLIENTE")
+                    .hasRole("CUSTOMER")
                 .requestMatchers(HttpMethod.DELETE, url_orders+"{id:\\d+}/cancel")
-                    .hasRole("CLIENTE")
+                    .hasRole("CUSTOMER")
                     
                 .requestMatchers(HttpMethod.POST, url_admin+"createEmployee")
                     .hasRole("ADMIN"));
