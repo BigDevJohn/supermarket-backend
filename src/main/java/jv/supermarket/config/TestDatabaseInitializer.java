@@ -57,28 +57,23 @@ public class TestDatabaseInitializer implements CommandLineRunner {
         client = userService.saveClient(client);
 
         // Create categories
-        Category c1 = new Category("Eletrônicos");
-        Category c2 = new Category("Mobília");
-        Category c3 = new Category("Smartphones");
-        Category c4 = new Category("Cozinha");
-
-        categoryService.saveCategory(c4);
-        categoryService.saveCategory(c3);
-        categoryService.saveCategory(c2);
-        categoryService.saveCategory(c1);
+        Category c1 = categoryService.saveCategory(new Category("Eletrônicos"));
+        Category c2 = categoryService.saveCategory(new Category("Mobília"));
+        Category c3 = categoryService.saveCategory(new Category("Smartphones"));
+        Category c4 = categoryService.saveCategory(new Category("Cozinha"));
 
         // Create and associate products
         ProductDTO p1 = productService.saveProduct(new ProductRequestDTO("Smartphone", "Samsung", new BigDecimal(3000), 20,
-                "O melhor da Samsung", Arrays.asList("Smartphones", "Eletrônicos")));
+                "O melhor da Samsung", Arrays.asList(c3.getId(), c1.getId())));
 
         productService.saveProduct(new ProductRequestDTO("Smartphone", "Xiaomi", new BigDecimal(3200), 32,
-                "O mundo todo no seu bolso", Arrays.asList("Smartphones", "Eletrônicos")));
+                "O mundo todo no seu bolso", Arrays.asList(c3.getId(), c1.getId())));
 
         productService.saveProduct(new ProductRequestDTO("Geladeira", "Samsung", new BigDecimal(4000), 10,
-                "Gela que é uma beleza!", Arrays.asList("Cozinha", "Eletrônicos")));
+                "Gela que é uma beleza!", Arrays.asList(c4.getId(), c1.getId())));
 
         ProductDTO p4 = productService.saveProduct(new ProductRequestDTO("Cama de Casal", "Plumatex", new BigDecimal(1500),
-                5, "O que há de conforto para você", Arrays.asList("Mobília")));
+                5, "O que há de conforto para você", Arrays.asList(c2.getId())));
 
         Cart cart = cartService.getCartById(client.getId());
 
