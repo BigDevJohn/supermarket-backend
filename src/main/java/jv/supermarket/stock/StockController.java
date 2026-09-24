@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/supermarket/stock")
+@RequestMapping("/supermarket/stock/{stockId}")
 public class StockController {
 
     private final StockService stockService;
@@ -17,17 +17,17 @@ public class StockController {
         this.stockService = stockService;
     }
 
-    @GetMapping("/{stockId}")
+    @GetMapping
     public StockDTO getProductStock(@PathVariable Long stockId) {
         return stockService.getStockById(stockId);
     }
 
-    @PutMapping("/{stockId}/entries")
+    @PutMapping("/entries")
     public StockDTO addProductEntries(@RequestBody StockDTO stock, @PathVariable Long stockId) {
         return stockService.stockEntry(stockId, stock.quantity());
     }
 
-    @PutMapping("/{stockId}/exits")
+    @PutMapping("/exits")
     public StockDTO subtractProductStock(@RequestBody StockDTO stock, @PathVariable Long stockId) {
         return stockService.stockExit(stockId, stock.quantity());
     }
