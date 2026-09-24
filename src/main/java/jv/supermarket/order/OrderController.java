@@ -38,7 +38,7 @@ public class OrderController {
         @ApiResponse(responseCode = "201",
             description = "Order created successfully.",
             content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = Order.class))),
+                schema = @Schema(implementation = OrderDTO.class))),
         @ApiResponse(responseCode = "404",
             description = "Cart is empty. Add items first before placing an order.",
             content = @Content(mediaType = "application/json",
@@ -49,7 +49,7 @@ public class OrderController {
                 schema = @Schema(implementation = ApiError.class)))
     })
     @PostMapping("/create")
-    public ResponseEntity<Order> createOrder() {
+    public ResponseEntity<OrderDTO> createOrder() {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder());
     }
 

@@ -50,8 +50,8 @@ public class TestDatabaseInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        User employee = new User("kleber", "kleber@gmail.com", "123456");
-        User client = new User("joao", "joao@gmail.com", "123456");
+        User employee = new User("kleber", "employee@supermarket.local", "123456");
+        User client = new User("joao", "customer@supermarket.local", "123456");
 
         employee = userService.saveEmployee(employee);
         client = userService.saveClient(client);

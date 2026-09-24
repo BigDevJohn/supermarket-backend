@@ -1,5 +1,6 @@
 package jv.supermarket.stock;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -12,6 +13,7 @@ public class Stock {
     @Id
     private Long id;
 
+    @JsonIgnore
     @OneToOne
     @MapsId
     @JoinColumn(name = "id")
@@ -25,6 +27,7 @@ public class Stock {
 
     public Stock() {
     }
+    @JsonIgnore
     public Product getProduct() {
         return product;
     }
@@ -46,7 +49,6 @@ public class Stock {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((product == null) ? 0 : product.hashCode());
         result = prime * result + ((quantity == null) ? 0 : quantity.hashCode());
         return result;
     }
@@ -64,11 +66,6 @@ public class Stock {
             if (other.id != null)
                 return false;
         } else if (!id.equals(other.id))
-            return false;
-        if (product == null) {
-            if (other.product != null)
-                return false;
-        } else if (!product.equals(other.product))
             return false;
         if (quantity == null) {
             if (other.quantity != null)
