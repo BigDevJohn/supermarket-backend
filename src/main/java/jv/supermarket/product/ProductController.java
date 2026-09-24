@@ -40,7 +40,7 @@ public class ProductController {
     @Operation(summary = "Saves a new product", description = "Receives a product DTO with its category name(s) (the category must already exist). A product with the same name and brand cannot exist twice.")
     @ApiResponses({
             @ApiResponse(responseCode = "409", description = "Product with same name and brand already exists", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "No category found with the given names", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "No category found with the given ids", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))),
             @ApiResponse(responseCode = "201", description = "Product created successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductDTO.class)))
     })
     @PostMapping("/save")

@@ -54,7 +54,7 @@ public class SupermarketApplicationTests {
 				.andExpect(jsonPath("$.price").value(3000.00))
 				.andExpect(jsonPath("$.description").value("O melhor da Samsung"))
 				.andExpect(jsonPath("$.categories").isArray())
-				.andExpect(jsonPath("$.categories", org.hamcrest.Matchers.containsInAnyOrder("Smartphones", "Eletrônicos")))
+				.andExpect(jsonPath("$.categories", org.hamcrest.Matchers.containsInAnyOrder(1, 3)))
 				.andExpect(jsonPath("$.images").isArray());
 	}
 

@@ -64,7 +64,7 @@ public class AuthController {
             content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = AuthResponseDTO.class))),
         @ApiResponse(responseCode = "400",
-            description = "Registration failed: a user with this email already exists",
+            description = "Registration failed: invalid data provided",
             content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = ApiError.class)))
     })
