@@ -39,7 +39,7 @@ public class UserService {
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        Role role = roleRepository.findByName("ROLE_CLIENTE");
+        Role role = roleRepository.findByName("ROLE_CUSTOMER");
         user.getRoles().add(role);
 
         user = userRepository.save(user);
@@ -72,7 +72,7 @@ public class UserService {
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        Role role = roleRepository.findByName("ROLE_FUNCIONARIO");
+        Role role = roleRepository.findByName("ROLE_EMPLOYEE");
         user.getRoles().add(role);
 
         user = userRepository.save(user);
@@ -144,7 +144,7 @@ public class UserService {
     public boolean isClient() {
         User user = getLoggedUser();
         return user.getRoles().stream()
-                .anyMatch(role -> role.getName().equals("ROLE_CLIENTE"));
+                .anyMatch(role -> role.getName().equals("ROLE_CUSTOMER"));
     }
 
 }

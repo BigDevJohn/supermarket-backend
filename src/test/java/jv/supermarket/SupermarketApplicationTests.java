@@ -36,14 +36,14 @@ public class SupermarketApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails("admin@gmail.com")
+	@WithUserDetails("admin@supermarket.local")
 	public void testProductWithAuth() throws Exception {
 		mvc.perform(get(baseUrl + "product/all"))
 				.andExpect(status().isOk());
 	}
 
 	@Test
-	@WithUserDetails("admin@gmail.com")
+	@WithUserDetails("admin@supermarket.local")
 	public void testProductGetWithAuth() throws Exception {
 		mvc.perform(get(baseUrl + "product/1"))
 				.andExpect(status().isOk())
@@ -60,7 +60,7 @@ public class SupermarketApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails("admin@gmail.com")
+	@WithUserDetails("admin@supermarket.local")
 	public void testSaveProductWithAuth() throws Exception {
 		String productJson = """
 				    {
@@ -84,7 +84,7 @@ public class SupermarketApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails("admin@gmail.com")
+	@WithUserDetails("admin@supermarket.local")
 	public void testGetStockWithAuth() throws Exception {
 		mvc.perform(get("/supermarket/stock/1"))
 				.andExpect(status().isOk())
@@ -93,7 +93,7 @@ public class SupermarketApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails("admin@gmail.com")
+	@WithUserDetails("admin@supermarket.local")
 	public void testEntryStockWithAuth() throws Exception {
 		String stockJson = """
 				    {
@@ -111,7 +111,7 @@ public class SupermarketApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails("admin@gmail.com")
+	@WithUserDetails("admin@supermarket.local")
 	public void testExitStockWithAuth() throws Exception {
 		String stockJson = """
 				    {
@@ -130,7 +130,7 @@ public class SupermarketApplicationTests {
 
 
 	@Test
-	@WithUserDetails("admin@gmail.com")
+	@WithUserDetails("admin@supermarket.local")
 	public void testUpdateProductWithAuth() throws Exception {
 		String productJson = """
 				    {
@@ -152,7 +152,7 @@ public class SupermarketApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails("admin@gmail.com")
+	@WithUserDetails("admin@supermarket.local")
 	public void testDeleteProductWithAuth() throws Exception {
 		mvc.perform(delete("/supermarket/product/4")
 				.with(csrf()))
@@ -160,7 +160,7 @@ public class SupermarketApplicationTests {
 	}
 
 	@Test
-	@WithUserDetails("admin@gmail.com")
+	@WithUserDetails("admin@supermarket.local")
 	public void testCreateCategory() throws Exception {
 		String jsonSend = """
 				{
@@ -182,7 +182,7 @@ public class SupermarketApplicationTests {
 	}
 
 	@Test
-	@WithMockUser(username = "joao@gmail.com", roles = "CLIENTE")
+	@WithMockUser(username = "customer@supermarket.local", roles = "CUSTOMER")
 	public void testAddCartItem() throws Exception {
 		mvc.perform(post(baseUrl + "/cart/addItem/1")
 				.queryParam("quantity", "2")
@@ -191,7 +191,7 @@ public class SupermarketApplicationTests {
 	}
 
 	@Test
-	@WithMockUser(username = "joao@gmail.com", roles = "CLIENTE")
+	@WithMockUser(username = "customer@supermarket.local", roles = "CUSTOMER")
 	public void testCreateOrder() throws Exception {
 		mvc.perform(post(baseUrl + "order/create")
 				.with(csrf()))

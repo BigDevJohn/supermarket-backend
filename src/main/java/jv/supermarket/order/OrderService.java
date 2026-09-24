@@ -55,7 +55,7 @@ public class OrderService {
     }
 
     @Transactional
-    public Order createOrder() {
+    public OrderDTO createOrder() {
         User user = userService.getLoggedUser();
         Cart cart = cartService.getCartById(user.getId());
         if (cart.getItems().isEmpty()) {
@@ -77,7 +77,9 @@ public class OrderService {
 
         cartService.clearCart(cart.getId());
 
-        return orderRepo.save(order);
+        order = orderRepo.save(order);
+
+        return convertOrderToDTO(order);
     }
 
     @Transactional
@@ -88,7 +90,7 @@ public class OrderService {
         for (Role role : user.getRoles()) {
             if (role.getName().equals("ROLE_ADMIN")) {
                 return convertOrderToDTO(order);
-            } else if (role.getName().equals("ROLE_CLIENTE")) {
+            } else if (role.getName().equals("ROLE_CUSTOMER")) {
                 if (order.getUser().getId().equals(user.getId())) {
                     return convertOrderToDTO(order);
                 }
@@ -118,7 +120,7 @@ public class OrderService {
             if (role.getName().equals("ROLE_ADMIN")) {
                 order.setStatus(OrderStatus.CANCELLED);
                 return orderRepo.save(order);
-            } else if (role.getName().equals("ROLE_CLIENTE")) {
+            } else if (role.getName().equals("ROLE_CUSTOMER")) {
                 if (order.getUser().getId().equals(user.getId())) {
                     order.setStatus(OrderStatus.CANCELLED);
                     return orderRepo.save(order);

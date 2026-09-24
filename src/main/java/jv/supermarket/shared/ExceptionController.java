@@ -78,7 +78,7 @@ public class ExceptionController {
     }
 
     @ExceptionHandler(BadAuthRequestException.class)
-    public ResponseEntity<ApiError> authError(IllegalArgumentException e, HttpServletRequest request) {
+    public ResponseEntity<ApiError> authError(BadAuthRequestException e, HttpServletRequest request) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
         ArrayList<String> details = new ArrayList<>();
         details.add(e.getMessage());
