@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jv.supermarket.category.CategoryDTO;
 import jv.supermarket.image.ImageDTO;
 
 public class ProductDTO {
@@ -16,7 +17,7 @@ public class ProductDTO {
     private BigDecimal price;
     private String description;
 
-    private Set<String> categories = new HashSet<>();
+    private Set<CategoryDTO> categories = new HashSet<>();
     private List<ImageDTO> images = new ArrayList<>();
 
     public ProductDTO() {
@@ -63,11 +64,11 @@ public class ProductDTO {
     }
 
 
-    public Set<String> getCategories() {
+    public Set<CategoryDTO> getCategories() {
         return categories;
     }
 
-    public void setCategories(Set<String> categories) {
+    public void setCategories(Set<CategoryDTO> categories) {
         this.categories = categories;
     }
 
