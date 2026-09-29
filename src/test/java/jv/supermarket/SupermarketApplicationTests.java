@@ -54,7 +54,8 @@ public class SupermarketApplicationTests {
 				.andExpect(jsonPath("$.price").value(3000.00))
 				.andExpect(jsonPath("$.description").value("O melhor da Samsung"))
 				.andExpect(jsonPath("$.categories").isArray())
-				.andExpect(jsonPath("$.categories", org.hamcrest.Matchers.containsInAnyOrder(1, 3)))
+				.andExpect(jsonPath("$.categories[*].id", org.hamcrest.Matchers.containsInAnyOrder(3, 1)))
+				.andExpect(jsonPath("$.categories[*].name").isNotEmpty())
 				.andExpect(jsonPath("$.images").isArray());
 	}
 
@@ -68,7 +69,7 @@ public class SupermarketApplicationTests {
 				        "price": 3000,
 				        "stock": 20,
 				        "description": "O melhor da LG",
-				        "categories": ["Smartphones", "Eletrônicos"]
+				        "categories": ["3", "1"]
 				    }
 				""";
 

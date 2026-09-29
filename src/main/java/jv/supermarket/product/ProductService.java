@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 import jv.supermarket.category.Category;
+import jv.supermarket.category.CategoryDTO;
 import jv.supermarket.category.CategoryRepository;
 import jv.supermarket.image.ImageDTO;
 import jv.supermarket.shared.customexception.AlreadyExistException;
@@ -207,11 +208,11 @@ public class ProductService {
         dto.setPrice(product.getPrice());
         dto.setDescription(product.getDescription());
 
-        // Convert Set<Category> → Set<String>
-        Set<String> categoryNames = product.getCategories().stream()
-                .map(Category::getName)
+        // Convert Set<Category> → Set<CategoryDTO>
+        Set<CategoryDTO> categoryDTOs = product.getCategories().stream()
+                .map(c -> new CategoryDTO(c.getId(), c.getName()))
                 .collect(Collectors.toSet());
-        dto.setCategories(categoryNames);
+        dto.setCategories(categoryDTOs);
 
         // Convert List<Image> → List<ImageDTO>
         if (product.getImages() != null) {
