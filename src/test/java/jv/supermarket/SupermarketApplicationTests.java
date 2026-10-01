@@ -164,21 +164,49 @@ public class SupermarketApplicationTests {
 	public void testCreateCategory() throws Exception {
 		String jsonSend = """
 				{
-				                "name": "Ferramentas"
-				            }
-				""";
-		String jsonExpect = """
-				{
-				    "id": 5,
-				                "name": "Ferramentas"
-				            }
+				    "name": "Ferramentas"
+				}
 				""";
 		mvc.perform(post("/supermarket/category/save")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(jsonSend)
 				.with(csrf()))
 				.andExpect(status().isCreated())
-				.andExpect(content().json(jsonExpect));
+				.andExpect(jsonPath("$.name").value("Ferramentas"));
+	}
+
+	@Test
+	@WithUserDetails("admin@supermarket.local")
+	public void testDeleteCategoryWithoutProducts() throws Exception {
+		// Create a fresh category with no products and immediately delete it
+		String jsonSend = """
+				{
+				    "name": "Categoria Vazia"
+				}
+				""";
+		String response = mvc.perform(post("/supermarket/category/save")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(jsonSend)
+				.with(csrf()))
+				.andExpect(status().isCreated())
+				.andReturn().getResponse().getContentAsString();
+
+		Long id = com.fasterxml.jackson.databind.json.JsonMapper.builder().build()
+				.readTree(response).get("id").asLong();
+
+		mvc.perform(delete("/supermarket/category/" + id)
+				.with(csrf()))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	@WithUserDetails("admin@supermarket.local")
+	public void testDeleteCategoryWithProducts_Conflict() throws Exception {
+		// Category 1 (Eletrônicos) has products associated in the test seed data
+		mvc.perform(delete("/supermarket/category/1")
+				.with(csrf()))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.error").value("Category has associated products"));
 	}
 
 	@Test

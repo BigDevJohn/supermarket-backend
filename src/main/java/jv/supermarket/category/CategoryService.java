@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import jv.supermarket.product.Product;
 import jv.supermarket.shared.customexception.AlreadyExistException;
+import jv.supermarket.shared.customexception.CategoryNotEmptyException;
 import jv.supermarket.shared.customexception.ResourceNotFoundException;
 
 @Service
@@ -41,19 +41,15 @@ public class CategoryService {
     }
 
     public void deleteCategoryById(Long id) {
-        if (categoryRepository.existsById(id)) {
-            Category category = categoryRepository.findById(id).get();
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category with id: " + id + " not found"));
 
-            for (Product product : category.getProducts()) {
-                product.getCategories().remove(category);
-                category.getProducts().remove(product);
-            }
-
-            categoryRepository.save(category);
-            categoryRepository.deleteById(id);
-        } else {
-            throw new ResourceNotFoundException("Category with id: " + id + " not found");
+        if (!category.getProducts().isEmpty()) {
+            throw new CategoryNotEmptyException(
+                    "Category with id: " + id + " cannot be deleted because it still has associated products");
         }
+
+        categoryRepository.deleteById(id);
     }
 
     public Category updateCategory(Long id, Category updatedCategory) {
