@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.servlet.http.HttpServletRequest;
 import jv.supermarket.shared.customexception.AlreadyExistException;
 import jv.supermarket.shared.customexception.BadAuthRequestException;
+import jv.supermarket.shared.customexception.CategoryNotEmptyException;
 import jv.supermarket.shared.customexception.ImageSavingException;
 import jv.supermarket.shared.customexception.OutOfStockException;
 import jv.supermarket.shared.customexception.ResourceNotFoundException;
@@ -36,6 +37,15 @@ public class ExceptionController {
         ArrayList<String> details = new ArrayList<>();
         details.add(e.getMessage());
         ApiError error = new ApiError(Instant.now(), status.value(), "Resource already exists", request.getRequestURI(), details);
+        return ResponseEntity.status(status).body(error);
+    }
+
+    @ExceptionHandler(CategoryNotEmptyException.class)
+    public ResponseEntity<ApiError> categoryNotEmpty(CategoryNotEmptyException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.CONFLICT;
+        ArrayList<String> details = new ArrayList<>();
+        details.add(e.getMessage());
+        ApiError error = new ApiError(Instant.now(), status.value(), "Category has associated products", request.getRequestURI(), details);
         return ResponseEntity.status(status).body(error);
     }
 
