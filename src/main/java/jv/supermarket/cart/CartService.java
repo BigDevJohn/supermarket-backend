@@ -62,6 +62,7 @@ public class CartService {
                     log.warn("[clearCart] Cart not found with id: {}", cartId);
                     return new ResourceNotFoundException("Cart not found with id: " + cartId);
                 });
+        log.info("[clearCart] Deleting all items from cart with ID: {}", cartId);
         itemRepo.deleteAllByCartId(cartId);
         cart.clearCart();
         log.info("[clearCart] Cart with ID: {} cleared successfully", cartId);

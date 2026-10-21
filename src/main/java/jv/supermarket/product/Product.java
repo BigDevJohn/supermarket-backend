@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,10 +23,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jv.supermarket.category.Category;
 import jv.supermarket.image.Image;
+import jv.supermarket.shared.Auditable;
 import jv.supermarket.stock.Stock;
 
 @Entity
-public class Product {
+public class Product extends Auditable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

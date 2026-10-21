@@ -19,11 +19,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jv.supermarket.order.enums.OrderStatus;
+import jv.supermarket.shared.Auditable;
 import jv.supermarket.user.User;
 
 @Entity
 @Table(name = "orders")
-public class Order {
+public class Order extends Auditable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

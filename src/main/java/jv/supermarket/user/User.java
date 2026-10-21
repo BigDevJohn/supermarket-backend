@@ -22,10 +22,11 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jv.supermarket.cart.Cart;
 import jv.supermarket.order.Order;
+import jv.supermarket.shared.Auditable;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
