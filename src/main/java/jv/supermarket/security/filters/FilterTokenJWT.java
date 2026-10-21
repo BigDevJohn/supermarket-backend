@@ -49,10 +49,6 @@ public class FilterTokenJWT extends OncePerRequestFilter {
                         .map(role -> new SimpleGrantedAuthority(role.getName()))
                         .collect(Collectors.toSet());
 
-                System.out.println("Authenticated user: " + login);
-                System.out.println("User roles: " +
-                        user.getRoles().stream().map(Role::getName).collect(Collectors.toList()));
-
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null,
                         authorities);
 
