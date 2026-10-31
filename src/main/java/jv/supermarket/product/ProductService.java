@@ -10,8 +10,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+import jv.supermarket.audit.AuditLogService;
 import jv.supermarket.category.Category;
 import jv.supermarket.category.CategoryDTO;
 import jv.supermarket.category.CategoryRepository;
@@ -33,14 +35,20 @@ public class ProductService {
 
     final StockService stockService;
 
+    final AuditLogService auditLogService;
+    private final TransactionTemplate transactionTemplate;
+
     private static final Logger log = LoggerFactory.getLogger(ProductService.class);
 
     ProductService(ProductRepository productRepository, CategoryRepository categoryRepository,
-            UserService userService, StockService stockService) {
+            UserService userService, StockService stockService, AuditLogService auditLogService,
+            PlatformTransactionManager transactionManager) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.userService = userService;
         this.stockService = stockService;
+        this.auditLogService = auditLogService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     private boolean productExists(String name, String brand) {
@@ -62,7 +70,8 @@ public class ProductService {
     @Transactional
     public ProductDTO saveProduct(ProductRequestDTO dto) {
         if (productExists(dto.getName(), dto.getBrand())) {
-            log.warn("[saveProduct] Attempt to create a duplicate product with name: {} and brand: {}", dto.getName(), dto.getBrand());
+            log.warn("[saveProduct] Attempt to create a duplicate product with name: {} and brand: {}", dto.getName(),
+                    dto.getBrand());
             throw new AlreadyExistException("A product with this name and brand already exists.");
         }
         log.info("[saveProduct] Initializing product creation");
@@ -85,7 +94,12 @@ public class ProductService {
         savedProduct.setStock(stock);
         log.info("[saveProduct] Stock initialized with quantity: {}", stock.getQuantity());
         log.info("[saveProduct] Product creation completed successfully for ID: {}", savedProduct.getId());
-        return convertToDTO(productRepository.save(savedProduct));
+
+        savedProduct = productRepository.save(savedProduct);
+
+        auditLogService.logProductCreation(savedProduct);
+        ProductDTO productDTO = convertToDTO(savedProduct);
+        return productDTO;
     }
 
     private void addCategoriesToProduct(Product product, List<Long> categoryIds) {
@@ -113,42 +127,53 @@ public class ProductService {
         return convertToDTO(getProductById(id));
     }
 
+    @Transactional
     public ProductDTO updateProduct(Product product, Long id) {
         log.info("[updateProduct] Updating product with ID: {}", id);
 
         Product savedProduct = getProductById(id);
+        AuditLogService.ProductSnapshot oldProduct = AuditLogService.ProductSnapshot.from(savedProduct);
         log.info("[updateProduct] Product found with ID: {}", savedProduct.getId());
-        
+
         savedProduct.setName(product.getName());
         savedProduct.setBrand(product.getBrand());
         savedProduct.setPrice(product.getPrice());
         savedProduct.setDescription(product.getDescription());
 
-        Product updated = productRepository.save(savedProduct);
-        log.info("[updateProduct] Product with ID: {} updated successfully", updated.getId());
-        return convertToDTO(updated);
+        savedProduct = productRepository.save(savedProduct);
+        log.info("[updateProduct] Product with ID: {} updated successfully", savedProduct.getId());
+        auditLogService.logProductUpdate(oldProduct, savedProduct);
+        return convertToDTO(savedProduct);
 
     }
 
     public void deleteProductById(Long id) {
-        if (productRepository.existsById(id)) {
-            log.info("[deleteProductById] Attempting to delete product with ID: {}", id);
-            try {
-                productRepository.deleteById(id);
-                log.info("[deleteProductById] Product with ID: {} deleted successfully", id);
-            } catch (DataIntegrityViolationException e) {
-                log.warn("[deleteProductById] Product with ID: {} cannot be deleted due to data integrity constraints. Falling back to making it unavailable.", id);
-                makeUnavailable(id);
-            } catch (Exception e) {
-                log.error("[deleteProductById] An unexpected error occurred while deleting product with ID: {}", id, e);
-                throw new RuntimeException("An unexpected error occurred while deleting the product.");
-            }
-        } else {
-            log.warn("[deleteProductById] Product with id: {} not found", id);
-            throw new ResourceNotFoundException("Product with id: " + id + " not found");
+        Product product = getProductById(id);
+        log.info("[deleteProductById] Attempting to delete product with ID: {}", id);
+        try {
+            transactionTemplate.executeWithoutResult(status -> {
+                productRepository.delete(product);
+                auditLogService.logProductDeletion(product);
+            });
+            log.info("[deleteProductById] Product with ID: {} deleted successfully", id);
+        } catch (DataIntegrityViolationException e) {
+            log.warn(
+                    "[deleteProductById] Product with ID: {} cannot be deleted due to data integrity constraints. Falling back to making it unavailable.",
+                    id);
+            transactionTemplate.executeWithoutResult(status -> {
+                Product existingProduct = getProductById(id);
+                if (!existingProduct.isAvailable()) {
+                    throw new IllegalStateException("The product was already unavailable.");
+                }
+                AuditLogService.ProductSnapshot before = AuditLogService.ProductSnapshot.from(existingProduct);
+                existingProduct.setAvailable(false);
+                Product updated = productRepository.save(existingProduct);
+                auditLogService.logProductUpdate(before, updated);
+            });
         }
     }
 
+    @Transactional
     public void makeUnavailable(Long id) {
         log.info("[makeUnavailable] Attempting to make product with ID: {} unavailable", id);
         if (productRepository.existsById(id)) {
@@ -157,8 +182,10 @@ public class ProductService {
                 log.warn("[makeUnavailable] Product with ID: {} was already unavailable", id);
                 throw new IllegalStateException("The product was already unavailable.");
             }
+            AuditLogService.ProductSnapshot before = AuditLogService.ProductSnapshot.from(product);
             product.setAvailable(false);
-            productRepository.save(product);
+            Product updated = productRepository.save(product);
+            auditLogService.logProductUpdate(before, updated);
             log.info("[makeUnavailable] Product with ID: {} is now unavailable", id);
         } else {
             log.warn("[makeUnavailable] Product with id: {} not found", id);
@@ -166,6 +193,7 @@ public class ProductService {
         }
     }
 
+    @Transactional
     public void makeAvailable(Long id) {
         log.info("[makeAvailable] Attempting to make product with ID: {} available", id);
         if (productRepository.existsById(id)) {
@@ -174,8 +202,10 @@ public class ProductService {
                 log.warn("[makeAvailable] Product with ID: {} was already available", id);
                 throw new IllegalStateException("The product was already available.");
             }
+            AuditLogService.ProductSnapshot before = AuditLogService.ProductSnapshot.from(product);
             product.setAvailable(true);
-            productRepository.save(product);
+            Product updated = productRepository.save(product);
+            auditLogService.logProductUpdate(before, updated);
             log.info("[makeAvailable] Product with ID: {} is now available", id);
         } else {
             log.warn("[makeAvailable] Product with id: {} not found", id);
