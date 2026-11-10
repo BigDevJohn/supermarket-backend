@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import jv.supermarket.audit.AuditLogService;
 import jv.supermarket.shared.customexception.AlreadyExistException;
 import jv.supermarket.shared.customexception.CategoryNotEmptyException;
 import jv.supermarket.shared.customexception.ResourceNotFoundException;
@@ -16,9 +17,11 @@ public class CategoryService {
     private static final Logger log = LoggerFactory.getLogger(CategoryService.class);
 
     final CategoryRepository categoryRepository;
+    final AuditLogService auditLogService;
 
-    CategoryService(CategoryRepository categoryRepository) {
+    CategoryService(CategoryRepository categoryRepository, AuditLogService auditLogService) {
         this.categoryRepository = categoryRepository;
+        this.auditLogService = auditLogService;
     }
 
     public Category saveCategory(Category category) {
@@ -29,6 +32,7 @@ public class CategoryService {
         }
         Category savedCategory = categoryRepository.save(category);
         log.info("[saveCategory] Category saved successfully with ID: {}", savedCategory.getId());
+        auditLogService.logCategoryCreation(savedCategory);
         return savedCategory;
     }
 
@@ -68,18 +72,21 @@ public class CategoryService {
                 });
 
         if (!category.getProducts().isEmpty()) {
-            log.warn("[deleteCategoryById] Category with ID: {} cannot be deleted because it still has associated products", id);
+            log.warn(
+                    "[deleteCategoryById] Category with ID: {} cannot be deleted because it still has associated products",
+                    id);
             throw new CategoryNotEmptyException(
                     "Category with id: " + id + " cannot be deleted because it still has associated products");
         }
-
         categoryRepository.deleteById(id);
+        auditLogService.logCategoryDeletion(category);
         log.info("[deleteCategoryById] Category with ID: {} deleted successfully", id);
     }
 
     public Category updateCategory(Long id, Category updatedCategory) {
         log.info("[updateCategory] Updating category with ID: {}", id);
         Category category = getCategoryById(id);
+        AuditLogService.CategorySnapshot before = AuditLogService.CategorySnapshot.from(category);
         category.setName(updatedCategory.getName());
 
         if (updatedCategory.getProducts() != null) {
@@ -88,6 +95,7 @@ public class CategoryService {
         }
 
         Category saved = categoryRepository.save(category);
+        auditLogService.logCategoryUpdate(before, saved);
         log.info("[updateCategory] Category with ID: {} updated successfully", saved.getId());
         return saved;
     }

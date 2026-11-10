@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import jv.supermarket.audit.enums.Action;
 import jv.supermarket.audit.enums.EntityType;
+import jv.supermarket.category.Category;
 import jv.supermarket.product.Product;
 import jv.supermarket.shared.customexception.ResourceNotFoundException;
 import jv.supermarket.user.UserService;
@@ -73,6 +74,34 @@ public class AuditLogService {
         logAction(auditLog);
     }
 
+     public void logCategoryCreation(Category savedCategory) {
+        AuditLog auditLog = new AuditLog();
+        auditLog.setAction(Action.CREATION);
+        auditLog.setEntityType(EntityType.CATEGORY);
+        auditLog.setEntityId(savedCategory.getId());
+        auditLog.setDetails("Category created: " + savedCategory.getName());
+        logAction(auditLog);
+    }
+
+    public void logCategoryDeletion(Category category) {
+        AuditLog auditLog = new AuditLog();
+        auditLog.setAction(Action.DELETION);
+        auditLog.setEntityType(EntityType.CATEGORY);
+        auditLog.setEntityId(category.getId());
+        auditLog.setDetails("Category deleted: " + category.getName());
+        logAction(auditLog);
+    }
+
+    public void logCategoryUpdate(CategorySnapshot before, Category after) {
+        AuditLog auditLog = new AuditLog();
+        auditLog.setAction(Action.UPDATE);
+        auditLog.setEntityType(EntityType.CATEGORY);
+        auditLog.setEntityId(after.getId());
+        auditLog.setDetails(buildCategoryChanges(before, after));
+        logAction(auditLog);
+    }
+
+    
     private String buildProductChanges(ProductSnapshot before, Product after) {
         StringJoiner changes = new StringJoiner("; ");
         addChange(changes, "name", before.name(), after.getName());
@@ -82,6 +111,13 @@ public class AuditLogService {
         addChange(changes, "available", before.available(), after.isAvailable());
         return changes.length() == 0 ? "Product updated with no field changes" : changes.toString();
     }
+
+    private String buildCategoryChanges(CategorySnapshot before, Category after) {
+        StringJoiner changes = new StringJoiner("; ");
+        addChange(changes, "name", before.name(), after.getName());
+        return changes.length() == 0 ? "Category updated with no field changes" : changes.toString();
+    }
+
 
     private void addChange(StringJoiner changes, String field, Object before, Object after) {
         if (!Objects.equals(before, after)) {
@@ -93,6 +129,12 @@ public class AuditLogService {
         public static ProductSnapshot from(Product product) {
             return new ProductSnapshot(product.getName(), product.getBrand(), product.getPrice(),
                     product.getDescription(), product.getAvailable());
+        }
+    }
+
+    public record CategorySnapshot(String name) {
+        public static CategorySnapshot from(Category category) {
+            return new CategorySnapshot(category.getName());
         }
     }
 }
