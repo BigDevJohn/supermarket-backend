@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import jv.supermarket.audit.AuditLogService;
 import jv.supermarket.product.Product;
 import jv.supermarket.shared.customexception.OutOfStockException;
 import jv.supermarket.shared.customexception.ResourceNotFoundException;
@@ -14,9 +15,11 @@ public class StockService {
     private static final Logger log = LoggerFactory.getLogger(StockService.class);
 
     private final StockRepository stockRepository;
+    private final AuditLogService auditLogService;
 
-    StockService(StockRepository stockRepository) {
+    StockService(StockRepository stockRepository, AuditLogService auditLogService) {
         this.stockRepository = stockRepository;
+        this.auditLogService = auditLogService;
     }
 
     public StockDTO getStockById(Long id) {
@@ -46,10 +49,13 @@ public class StockService {
                     log.warn("[stockEntry] Stock with product id: {} not found", productId);
                     return new ResourceNotFoundException("Stock with product id: " + productId + " not found");
                 });
-
+        AuditLogService.StockSnapshot before = AuditLogService.StockSnapshot.from(stock);
         stock.setQuantity(stock.getQuantity() + quantity);
-        stockRepository.save(stock);
-        log.info("[stockEntry] Stock updated successfully for product ID: {}. New quantity: {}", productId, stock.getQuantity());
+        stock = stockRepository.save(stock);
+        auditLogService.logStockUpdate(before, stock);
+
+        log.info("[stockEntry] Stock updated successfully for product ID: {}. New quantity: {}", productId,
+                stock.getQuantity());
 
         return new StockDTO(stock.getQuantity());
     }
@@ -62,17 +68,22 @@ public class StockService {
                     return new ResourceNotFoundException("Stock with product id: " + productId + " not found");
                 });
         if (stock.getQuantity() < quantity) {
-            log.warn("[stockExit] Insufficient stock for product ID: {}. Available: {}, Requested: {}", productId, stock.getQuantity(), quantity);
+            log.warn("[stockExit] Insufficient stock for product ID: {}. Available: {}, Requested: {}", productId,
+                    stock.getQuantity(), quantity);
             throw new OutOfStockException("Insufficient stock quantity");
         }
         stock.setQuantity(stock.getQuantity() - quantity);
-        stockRepository.save(stock);
-        log.info("[stockExit] Stock updated successfully for product ID: {}. New quantity: {}", productId, stock.getQuantity());
+        AuditLogService.StockSnapshot before = AuditLogService.StockSnapshot.from(stock);
+        stock = stockRepository.save(stock);
+        auditLogService.logStockUpdate(before, stock);
+        log.info("[stockExit] Stock updated successfully for product ID: {}. New quantity: {}", productId,
+                stock.getQuantity());
         return new StockDTO(stock.getQuantity());
     }
 
     public boolean isStockAvailable(Integer quantity, Long productId) {
-        log.info("[isStockAvailable] Checking if stock quantity {} is available for product ID: {}", quantity, productId);
+        log.info("[isStockAvailable] Checking if stock quantity {} is available for product ID: {}", quantity,
+                productId);
         Stock stock = stockRepository.findById(productId)
                 .orElseThrow(() -> {
                     log.warn("[isStockAvailable] Stock with product id: {} not found", productId);

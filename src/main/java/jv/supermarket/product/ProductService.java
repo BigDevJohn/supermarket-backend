@@ -98,6 +98,7 @@ public class ProductService {
         savedProduct = productRepository.save(savedProduct);
 
         auditLogService.logProductCreation(savedProduct);
+        auditLogService.logStockCreation(savedProduct.getStock());
         ProductDTO productDTO = convertToDTO(savedProduct);
         return productDTO;
     }

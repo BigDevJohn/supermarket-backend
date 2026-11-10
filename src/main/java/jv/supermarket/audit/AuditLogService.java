@@ -13,6 +13,7 @@ import jv.supermarket.audit.enums.EntityType;
 import jv.supermarket.category.Category;
 import jv.supermarket.product.Product;
 import jv.supermarket.shared.customexception.ResourceNotFoundException;
+import jv.supermarket.stock.Stock;
 import jv.supermarket.user.UserService;
 
 @Service
@@ -74,7 +75,7 @@ public class AuditLogService {
         logAction(auditLog);
     }
 
-     public void logCategoryCreation(Category savedCategory) {
+    public void logCategoryCreation(Category savedCategory) {
         AuditLog auditLog = new AuditLog();
         auditLog.setAction(Action.CREATION);
         auditLog.setEntityType(EntityType.CATEGORY);
@@ -101,7 +102,25 @@ public class AuditLogService {
         logAction(auditLog);
     }
 
-    
+     public void logStockUpdate(StockSnapshot from, Stock stock) {
+        AuditLog auditLog = new AuditLog();
+        auditLog.setAction(Action.UPDATE);
+        auditLog.setEntityType(EntityType.STOCK);
+        auditLog.setEntityId(stock.getProduct().getId());
+        auditLog.setDetails("Stock updated for product ID: " + stock.getProduct().getId() + ". Quantity changed from "
+                + from.quantity() + " to " + stock.getQuantity());
+        logAction(auditLog);
+    }
+
+    public void logStockCreation(Stock stock) {
+        AuditLog auditLog = new AuditLog();
+        auditLog.setAction(Action.CREATION);
+        auditLog.setEntityType(EntityType.STOCK);
+        auditLog.setEntityId(stock.getProduct().getId());
+        auditLog.setDetails("Stock created with quantity: " + stock.getQuantity() + " for product ID: " + stock.getProduct().getId());
+        logAction(auditLog);
+    }
+
     private String buildProductChanges(ProductSnapshot before, Product after) {
         StringJoiner changes = new StringJoiner("; ");
         addChange(changes, "name", before.name(), after.getName());
@@ -117,7 +136,6 @@ public class AuditLogService {
         addChange(changes, "name", before.name(), after.getName());
         return changes.length() == 0 ? "Category updated with no field changes" : changes.toString();
     }
-
 
     private void addChange(StringJoiner changes, String field, Object before, Object after) {
         if (!Objects.equals(before, after)) {
@@ -137,4 +155,11 @@ public class AuditLogService {
             return new CategorySnapshot(category.getName());
         }
     }
+
+    public record StockSnapshot(Integer quantity) {
+        public static StockSnapshot from(Stock stock) {
+            return new StockSnapshot(stock.getQuantity());
+        }
+    }
+
 }
