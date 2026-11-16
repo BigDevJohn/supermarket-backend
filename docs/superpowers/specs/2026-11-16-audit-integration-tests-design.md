@@ -6,7 +6,7 @@ Adicionar testes de integração para comprovar as quatro correções recentes d
 
 ## Abordagem
 
-Criar uma classe dedicada `AuditLogIntegrationTests` usando `@SpringBootTest`, `@AutoConfigureMockMvc` e o banco H2 do perfil de testes. Os testes devem exercitar os endpoints reais, autenticação/autorização, transações e persistência no `AuditLogRepository`.
+Criar uma classe dedicada `AuditLogIntegrationTests` usando `@SpringBootTest`, `@AutoConfigureMockMvc`, `@ActiveProfiles("test")` e o banco H2 do perfil de testes. Aplicar também `@ActiveProfiles("test")` à classe de testes existente para que a suíte não dependa de `spring.profiles.active` global. Os testes devem exercitar os endpoints reais, autenticação/autorização, transações e persistência no `AuditLogRepository`.
 
 ## Cobertura
 

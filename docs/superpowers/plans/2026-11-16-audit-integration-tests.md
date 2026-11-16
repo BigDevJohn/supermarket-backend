@@ -14,10 +14,11 @@
 
 **Files:**
 - Create: `src/test/java/jv/supermarket/AuditLogIntegrationTests.java`
+- Modify: `src/test/java/jv/supermarket/SupermarketApplicationTests.java`
 
-- [ ] **Step 1: Create the test class and shared setup**
+- [ ] **Step 1: Pin the test profile and create shared setup**
 
-Create a dedicated `@SpringBootTest(classes = SupermarketApplication.class)`, `@AutoConfigureMockMvc`, `@Transactional` test class in package `jv.supermarket`. Inject `MockMvc`, `AuditLogRepository`, and `OrderRepository`. Use the existing seeded product IDs and users; do not insert additional fixtures in the test class.
+Add `@ActiveProfiles("test")` to the existing `SupermarketApplicationTests` class so its expectations use the H2 fixture instead of the global `dev` profile. Create a dedicated `@SpringBootTest(classes = SupermarketApplication.class)`, `@AutoConfigureMockMvc`, `@ActiveProfiles("test")`, `@Transactional` test class in package `jv.supermarket`. Inject `MockMvc`, `AuditLogRepository`, `OrderRepository`, and `UserRepository`. Use the existing seeded product IDs and users; do not insert additional fixtures in either test class.
 
 ```java
 package jv.supermarket;
@@ -42,6 +43,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,6 +58,7 @@ import jv.supermarket.user.UserRepository;
 
 @SpringBootTest(classes = SupermarketApplication.class)
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 @Transactional
 class AuditLogIntegrationTests {
 
