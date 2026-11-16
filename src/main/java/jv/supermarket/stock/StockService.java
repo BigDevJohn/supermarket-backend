@@ -72,8 +72,8 @@ public class StockService {
                     stock.getQuantity(), quantity);
             throw new OutOfStockException("Insufficient stock quantity");
         }
-        stock.setQuantity(stock.getQuantity() - quantity);
         AuditLogService.StockSnapshot before = AuditLogService.StockSnapshot.from(stock);
+        stock.setQuantity(stock.getQuantity() - quantity);
         stock = stockRepository.save(stock);
         auditLogService.logStockUpdate(before, stock);
         log.info("[stockExit] Stock updated successfully for product ID: {}. New quantity: {}", productId,
