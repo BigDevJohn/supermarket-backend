@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import jv.supermarket.audit.AuditLogService;
 import jv.supermarket.shared.customexception.AlreadyExistException;
 import jv.supermarket.shared.customexception.CategoryNotEmptyException;
@@ -24,6 +25,7 @@ public class CategoryService {
         this.auditLogService = auditLogService;
     }
 
+    @Transactional 
     public Category saveCategory(Category category) {
         log.info("[saveCategory] Attempting to save category with name: {}", category.getName());
         if (categoryRepository.existsByName(category.getName())) {
@@ -63,6 +65,7 @@ public class CategoryService {
         return categories;
     }
 
+    @Transactional 
     public void deleteCategoryById(Long id) {
         log.info("[deleteCategoryById] Attempting to delete category with ID: {}", id);
         Category category = categoryRepository.findById(id)
@@ -83,6 +86,7 @@ public class CategoryService {
         log.info("[deleteCategoryById] Category with ID: {} deleted successfully", id);
     }
 
+    @Transactional 
     public Category updateCategory(Long id, Category updatedCategory) {
         log.info("[updateCategory] Updating category with ID: {}", id);
         Category category = getCategoryById(id);

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import jv.supermarket.audit.AuditLogService;
 import jv.supermarket.product.Product;
 import jv.supermarket.shared.customexception.OutOfStockException;
@@ -42,6 +43,7 @@ public class StockService {
         return new Stock(quantity, product);
     }
 
+    @Transactional
     public StockDTO stockEntry(Long productId, Integer quantity) {
         log.info("[stockEntry] Adding quantity: {} to stock for product ID: {}", quantity, productId);
         Stock stock = stockRepository.findById(productId)
@@ -60,6 +62,7 @@ public class StockService {
         return new StockDTO(stock.getQuantity());
     }
 
+    @Transactional 
     public StockDTO stockExit(Long productId, Integer quantity) {
         log.info("[stockExit] Removing quantity: {} from stock for product ID: {}", quantity, productId);
         Stock stock = stockRepository.findById(productId)
