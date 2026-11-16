@@ -138,6 +138,7 @@ public class OrderService {
                 });
     }
 
+    @Transactional 
     public Order cancelOrder(Long orderId) {
         log.info("[cancelOrder] Attempting to cancel order with ID: {}", orderId);
         User user = userService.getLoggedUser();
