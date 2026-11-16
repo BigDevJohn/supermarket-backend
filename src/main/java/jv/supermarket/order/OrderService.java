@@ -154,6 +154,7 @@ public class OrderService {
                 if (order.getUser().getId().equals(user.getId())) {
                     order.setStatus(OrderStatus.CANCELLED);
                     Order saved = orderRepo.save(order);
+                    auditLogService.logOrderCancellation(order);
                     log.info("[cancelOrder] Order ID: {} cancelled by owner user ID: {}", orderId, user.getId());
                     return saved;
                 }
