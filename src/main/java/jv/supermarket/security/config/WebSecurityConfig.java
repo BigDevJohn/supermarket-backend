@@ -70,6 +70,7 @@ public class WebSecurityConfig {
         String url_carts = "/supermarket/cart/";
         String url_orders = "/supermarket/order/";
         String url_admin = "/supermarket/admin/";
+        String url_audit = "/supermarket/audit/";
 
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         //@formatter:off
@@ -141,7 +142,9 @@ public class WebSecurityConfig {
                     .hasRole("CUSTOMER")
                 .requestMatchers(HttpMethod.DELETE, url_orders+"{id:\\d+}/cancel")
                     .hasRole("CUSTOMER")
-                    
+                .requestMatchers(HttpMethod.GET, url_audit+"**")
+                    .hasAnyRole("ADMIN", "EMPLOYEE")
+
                 .requestMatchers(HttpMethod.POST, url_admin+"createEmployee")
                     .hasRole("ADMIN"));
             //@formatter:on
