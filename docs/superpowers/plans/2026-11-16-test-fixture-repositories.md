@@ -115,7 +115,7 @@ saveProduct("Smartphone", "Xiaomi", new BigDecimal(3200), 32,
 saveProduct("Geladeira", "Samsung", new BigDecimal(4000), 10,
         "Gela que é uma beleza!", c4, c1);
 
-Product p4 = saveProduct("Cama de Casal", "Plumatex", new BigDecimal(1500), 5,
+saveProduct("Cama de Casal", "Plumatex", new BigDecimal(1500), 5,
         "O que há de conforto para você", c2);
 ```
 
@@ -123,9 +123,15 @@ The helper must preserve the original product creation order so product IDs 1 an
 
 - [ ] **Step 5: Persist the initial cart item directly**
 
-Keep `cartService.getCartById(client.getId())` only if `CartService` is retained; otherwise inject `CartRepository` and retrieve the client cart directly. Create one `CartItem` for `p1`, set its cart, product, and quantity to `3`, then save it with `cartItemRepository`.
+Inject `CartRepository` and retrieve the client cart directly. Create one
+`CartItem` for `p1`, set its cart, product, and quantity to `3`, then save it
+with `cartItemRepository`.
 
-This is equivalent to the original sequence of add, add, remove, and update, but avoids unnecessary service calls and leaves the same final cart state:
+This is equivalent to the original sequence of add, add, remove, and update,
+but avoids unnecessary service calls and leaves the same final cart state. Do
+not call `cart.addItem(...)` here: `Cart.items` is lazy and the command-line
+runner is not transactional. `CartItem.cart` is the owning side, so saving the
+item is sufficient:
 
 ```java
 Cart cart = cartRepository.findById(client.getId())
@@ -136,8 +142,6 @@ cartItem.setCart(cart);
 cartItem.setProduct(p1);
 cartItem.setQuantity(3);
 cartItemRepository.save(cartItem);
-cart.addItem(cartItem);
-cartRepository.save(cart);
 ```
 
 Use an explicit exception rather than a silent fallback if the user seeder failed to create the cart.

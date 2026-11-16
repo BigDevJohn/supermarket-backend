@@ -9,14 +9,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 
 import jv.supermarket.cart.Cart;
-import jv.supermarket.cart.CartItemService;
-import jv.supermarket.cart.CartService;
+import jv.supermarket.cart.CartItem;
+import jv.supermarket.cart.CartItemRepository;
+import jv.supermarket.cart.CartRepository;
 import jv.supermarket.category.Category;
-import jv.supermarket.category.CategoryService;
-import jv.supermarket.order.OrderService;
-import jv.supermarket.product.ProductDTO;
-import jv.supermarket.product.ProductRequestDTO;
-import jv.supermarket.product.ProductService;
+import jv.supermarket.category.CategoryRepository;
+import jv.supermarket.product.Product;
+import jv.supermarket.product.ProductRepository;
+import jv.supermarket.stock.Stock;
+import jv.supermarket.stock.StockRepository;
 import jv.supermarket.user.User;
 import jv.supermarket.user.UserService;
 
@@ -25,26 +26,21 @@ import jv.supermarket.user.UserService;
 @Order(2)
 public class TestDatabaseInitializer implements CommandLineRunner {
 
-    private final ProductService productService;
-
-    private final CategoryService categoryService;
-
-    private final CartItemService cartItemService;
-
-    private final CartService cartService;
-
+    private final CartItemRepository cartItemRepository;
+    private final CartRepository cartRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final StockRepository stockRepository;
     private final UserService userService;
 
-    @SuppressWarnings("unused")
-    private final OrderService orderService;
-
-    TestDatabaseInitializer(UserService userService, CategoryService categoryService, CartService cartService, OrderService orderService, CartItemService cartItemService, ProductService productService) {
+    TestDatabaseInitializer(UserService userService, CartItemRepository cartItemRepository, CartRepository cartRepository,
+            CategoryRepository categoryRepository, ProductRepository productRepository, StockRepository stockRepository) {
         this.userService = userService;
-        this.categoryService = categoryService;
-        this.cartService = cartService;
-        this.cartItemService = cartItemService;
-        this.productService = productService;
-        this.orderService = orderService;
+        this.cartItemRepository = cartItemRepository;
+        this.cartRepository = cartRepository;
+        this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
+        this.stockRepository = stockRepository;
     }
 
     @Override
@@ -57,30 +53,47 @@ public class TestDatabaseInitializer implements CommandLineRunner {
         client = userService.saveClient(client);
 
         // Create categories
-        Category c1 = categoryService.saveCategory(new Category("Eletrônicos"));
-        Category c2 = categoryService.saveCategory(new Category("Mobília"));
-        Category c3 = categoryService.saveCategory(new Category("Smartphones"));
-        Category c4 = categoryService.saveCategory(new Category("Cozinha"));
+        Category c1 = categoryRepository.save(new Category("Eletrônicos"));
+        Category c2 = categoryRepository.save(new Category("Mobília"));
+        Category c3 = categoryRepository.save(new Category("Smartphones"));
+        Category c4 = categoryRepository.save(new Category("Cozinha"));
 
         // Create and associate products
-        ProductDTO p1 = productService.saveProduct(new ProductRequestDTO("Smartphone", "Samsung", new BigDecimal(3000), 20,
-                "O melhor da Samsung", Arrays.asList(c3.getId(), c1.getId())));
+        Product p1 = saveProduct("Smartphone", "Samsung", new BigDecimal(3000), 20,
+                "O melhor da Samsung", c3, c1);
 
-        productService.saveProduct(new ProductRequestDTO("Smartphone", "Xiaomi", new BigDecimal(3200), 32,
-                "O mundo todo no seu bolso", Arrays.asList(c3.getId(), c1.getId())));
+        saveProduct("Smartphone", "Xiaomi", new BigDecimal(3200), 32,
+                "O mundo todo no seu bolso", c3, c1);
 
-        productService.saveProduct(new ProductRequestDTO("Geladeira", "Samsung", new BigDecimal(4000), 10,
-                "Gela que é uma beleza!", Arrays.asList(c4.getId(), c1.getId())));
+        saveProduct("Geladeira", "Samsung", new BigDecimal(4000), 10,
+                "Gela que é uma beleza!", c4, c1);
 
-        ProductDTO p4 = productService.saveProduct(new ProductRequestDTO("Cama de Casal", "Plumatex", new BigDecimal(1500),
-                5, "O que há de conforto para você", Arrays.asList(c2.getId())));
+        saveProduct("Cama de Casal", "Plumatex", new BigDecimal(1500),
+                5, "O que há de conforto para você", c2);
 
-        Cart cart = cartService.getCartById(client.getId());
+        Cart cart = cartRepository.findById(client.getId())
+                .orElseThrow(() -> new IllegalStateException("Client cart was not created"));
 
-        cartItemService.addItemToCart(p1.getId(), 2, cart.getId());
-        cartItemService.addItemToCart(p4.getId(), 1, cart.getId());
-        cartItemService.removeItemFromCart(cart.getId(), p4.getId());
-        cartItemService.updateItemQuantity(cart.getId(), p1.getId(), 3);
+        CartItem cartItem = new CartItem();
+        cartItem.setCart(cart);
+        cartItem.setProduct(p1);
+        cartItem.setQuantity(3);
+        cartItemRepository.save(cartItem);
+    }
+
+    private Product saveProduct(String name, String brand, BigDecimal price, int stockQuantity,
+            String description, Category... categories) {
+        Product product = new Product();
+        product.setName(name);
+        product.setBrand(brand);
+        product.setPrice(price);
+        product.setDescription(description);
+        Arrays.stream(categories).forEach(product::addCategory);
+
+        Product savedProduct = productRepository.save(product);
+        Stock stock = stockRepository.save(new Stock(stockQuantity, savedProduct));
+        savedProduct.setStock(stock);
+        return productRepository.save(savedProduct);
     }
 
 }
