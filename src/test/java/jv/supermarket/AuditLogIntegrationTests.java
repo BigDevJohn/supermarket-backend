@@ -95,6 +95,7 @@ class AuditLogIntegrationTests {
         assertEquals(Action.UPDATE, audit.getAction());
         assertEquals(EntityType.ORDER, audit.getEntityType());
         assertEquals(order.getId(), audit.getEntityId());
+        assertEquals(customer.getId(), audit.getUser().getId());
         assertTrue(audit.getDetails().contains("Order cancelled"));
     }
 
