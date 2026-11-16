@@ -2,6 +2,8 @@ package jv.supermarket.audit;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import jv.supermarket.audit.enums.Action;
 import jv.supermarket.audit.enums.EntityType;
 
@@ -10,7 +12,7 @@ public record AuditLogDTO(
         Action action,
         EntityType entityType,
         Long entityId,
-        String details,
+        @tools.jackson.databind.annotation.JsonSerialize(using = Jackson2JsonNodeSerializer.class) JsonNode details,
         LocalDateTime createdAt,
         Long userId,
         String userName) {

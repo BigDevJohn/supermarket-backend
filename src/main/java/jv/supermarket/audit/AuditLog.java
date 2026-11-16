@@ -2,6 +2,8 @@ package jv.supermarket.audit;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -16,6 +18,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jv.supermarket.audit.enums.Action;
 import jv.supermarket.audit.enums.EntityType;
 import jv.supermarket.user.User;
@@ -28,7 +32,9 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long entityId;
-    private String details;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "json")
+    private JsonNode details;
 
     @Enumerated(EnumType.STRING)
     private Action action;
@@ -47,7 +53,7 @@ public class AuditLog {
     public AuditLog() {
     }
 
-    public AuditLog(Long id, Action action, String details, LocalDateTime createdAt, User user, Long entityId,
+    public AuditLog(Long id, Action action, JsonNode details, LocalDateTime createdAt, User user, Long entityId,
             EntityType entityType) {
         this.id = id;
         this.action = action;
@@ -58,7 +64,7 @@ public class AuditLog {
         this.entityType = entityType;
     }
 
-    public AuditLog(Action action, String details, User user, Long entityId, EntityType entityType) {
+    public AuditLog(Action action, JsonNode details, User user, Long entityId, EntityType entityType) {
         this.action = action;
         this.details = details;
         this.user = user;
@@ -82,11 +88,11 @@ public class AuditLog {
         this.action = action;
     }
 
-    public String getDetails() {
+    public JsonNode getDetails() {
         return details;
     }
 
-    public void setDetails(String details) {
+    public void setDetails(JsonNode details) {
         this.details = details;
     }
 
