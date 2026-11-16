@@ -12,9 +12,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.validation.constraints.NotBlank;
 import jv.supermarket.product.Product;
+import jv.supermarket.shared.Auditable;
 
 @Entity
-public class Category {
+public class Category extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

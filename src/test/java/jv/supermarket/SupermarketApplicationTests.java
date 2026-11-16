@@ -17,17 +17,29 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+
+import jv.supermarket.audit.AuditLogRepository;
 
 @SpringBootTest(classes = SupermarketApplication.class)
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 @Transactional
 public class SupermarketApplicationTests {
 
 	@Autowired
 	MockMvc mvc;
 
+	@Autowired
+	AuditLogRepository auditLogRepository;
+
 	private final String baseUrl = "/supermarket/";
+
+	@Test
+	public void testInitialTestDataDoesNotCreateAuditLogs() {
+		org.junit.jupiter.api.Assertions.assertEquals(0, auditLogRepository.count());
+	}
 
 	@Test
 	public void testProductWithoutAuth_Forbidden() throws Exception {
