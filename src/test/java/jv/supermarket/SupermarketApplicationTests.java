@@ -17,12 +17,14 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import jv.supermarket.audit.AuditLogRepository;
 
 @SpringBootTest(classes = SupermarketApplication.class)
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 @Transactional
 public class SupermarketApplicationTests {
 
