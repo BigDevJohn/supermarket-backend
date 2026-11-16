@@ -1,7 +1,6 @@
 package jv.supermarket;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -69,7 +68,10 @@ class AuditLogIntegrationTests {
         assertEquals(Action.UPDATE, audit.getAction());
         assertEquals(EntityType.STOCK, audit.getEntityType());
         assertEquals(2L, audit.getEntityId());
-        assertTrue(audit.getDetails().contains("from 32 to 27"));
+        assertEquals("Stock updated", audit.getDetails().path("message").asText());
+        assertEquals("quantity", audit.getDetails().path("changes").get(0).path("field").asText());
+        assertEquals(32, audit.getDetails().path("changes").get(0).path("before").asInt());
+        assertEquals(27, audit.getDetails().path("changes").get(0).path("after").asInt());
     }
 
     @Test
@@ -96,7 +98,10 @@ class AuditLogIntegrationTests {
         assertEquals(EntityType.ORDER, audit.getEntityType());
         assertEquals(order.getId(), audit.getEntityId());
         assertEquals(customer.getId(), audit.getUser().getId());
-        assertTrue(audit.getDetails().contains("Order cancelled"));
+        assertEquals("Order cancelled", audit.getDetails().path("message").asText());
+        assertEquals("status", audit.getDetails().path("changes").get(0).path("field").asText());
+        assertEquals("WAITING_PAYMENT", audit.getDetails().path("changes").get(0).path("before").asText());
+        assertEquals("CANCELLED", audit.getDetails().path("changes").get(0).path("after").asText());
     }
 
     @Test
@@ -115,7 +120,10 @@ class AuditLogIntegrationTests {
                 .andExpect(jsonPath("$.content[0].entityType").value("STOCK"))
                 .andExpect(jsonPath("$.content[0].action").value("UPDATE"))
                 .andExpect(jsonPath("$.content[0].entityId").value(2))
-                .andExpect(jsonPath("$.content[0].details").value(org.hamcrest.Matchers.containsString("from 32 to 27")));
+                .andExpect(jsonPath("$.content[0].details.message").value("Stock updated"))
+                .andExpect(jsonPath("$.content[0].details.changes[0].field").value("quantity"))
+                .andExpect(jsonPath("$.content[0].details.changes[0].before").value(32))
+                .andExpect(jsonPath("$.content[0].details.changes[0].after").value(27));
     }
 
     @Test
@@ -134,7 +142,10 @@ class AuditLogIntegrationTests {
                 .andExpect(jsonPath("$.content[0].entityType").value("STOCK"))
                 .andExpect(jsonPath("$.content[0].action").value("UPDATE"))
                 .andExpect(jsonPath("$.content[0].entityId").value(2))
-                .andExpect(jsonPath("$.content[0].details").value(org.hamcrest.Matchers.containsString("from 32 to 37")));
+                .andExpect(jsonPath("$.content[0].details.message").value("Stock updated"))
+                .andExpect(jsonPath("$.content[0].details.changes[0].field").value("quantity"))
+                .andExpect(jsonPath("$.content[0].details.changes[0].before").value(32))
+                .andExpect(jsonPath("$.content[0].details.changes[0].after").value(37));
     }
 
     @Test

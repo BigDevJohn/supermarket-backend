@@ -146,16 +146,18 @@ public class OrderService {
 
         for (Role role : user.getRoles()) {
             if (role.getName().equals("ROLE_ADMIN")) {
+                OrderStatus before = order.getStatus();
                 order.setStatus(OrderStatus.CANCELLED);
                 Order saved = orderRepo.save(order);
                 log.info("[cancelOrder] Order ID: {} cancelled by admin user ID: {}", orderId, user.getId());
-                auditLogService.logOrderCancellation(order);
+                auditLogService.logOrderCancellation(before, order);
                 return saved;
             } else if (role.getName().equals("ROLE_CUSTOMER")) {
                 if (order.getUser().getId().equals(user.getId())) {
+                    OrderStatus before = order.getStatus();
                     order.setStatus(OrderStatus.CANCELLED);
                     Order saved = orderRepo.save(order);
-                    auditLogService.logOrderCancellation(order);
+                    auditLogService.logOrderCancellation(before, order);
                     log.info("[cancelOrder] Order ID: {} cancelled by owner user ID: {}", orderId, user.getId());
                     return saved;
                 }

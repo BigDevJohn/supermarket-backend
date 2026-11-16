@@ -2,8 +2,10 @@ package jv.supermarket.audit;
 
 import java.math.BigDecimal;
 import java.util.Objects;
-import java.util.StringJoiner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import jv.supermarket.audit.enums.Action;
 import jv.supermarket.audit.enums.EntityType;
 import jv.supermarket.category.Category;
 import jv.supermarket.order.Order;
+import jv.supermarket.order.enums.OrderStatus;
 import jv.supermarket.product.Product;
 import jv.supermarket.shared.customexception.ResourceNotFoundException;
 import jv.supermarket.stock.Stock;
@@ -22,10 +25,12 @@ public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
     private final UserService userService;
+    private final ObjectMapper objectMapper;
 
-    public AuditLogService(AuditLogRepository auditLogRepository, UserService userService) {
+    public AuditLogService(AuditLogRepository auditLogRepository, UserService userService, ObjectMapper objectMapper) {
         this.auditLogRepository = auditLogRepository;
         this.userService = userService;
+        this.objectMapper = objectMapper;
     }
 
     private void logAction(AuditLog auditLog) {
@@ -54,7 +59,14 @@ public class AuditLogService {
         auditLog.setAction(Action.CREATION);
         auditLog.setEntityType(EntityType.PRODUCT);
         auditLog.setEntityId(product.getId());
-        auditLog.setDetails("Product created: " + product.getName() + " (" + product.getBrand() + ")");
+        ObjectNode details = messageDetails("Product created");
+        ObjectNode attributes = details.putObject("attributes");
+        attributes.put("name", product.getName());
+        attributes.put("brand", product.getBrand());
+        attributes.set("price", objectMapper.valueToTree(product.getPrice()));
+        attributes.put("description", product.getDescription());
+        attributes.put("available", product.isAvailable());
+        auditLog.setDetails(details);
         logAction(auditLog);
     }
 
@@ -72,7 +84,11 @@ public class AuditLogService {
         auditLog.setAction(Action.DELETION);
         auditLog.setEntityType(EntityType.PRODUCT);
         auditLog.setEntityId(product.getId());
-        auditLog.setDetails("Product deleted: " + product.getName() + " (" + product.getBrand() + ")");
+        ObjectNode details = messageDetails("Product deleted");
+        ObjectNode attributes = details.putObject("attributes");
+        attributes.put("name", product.getName());
+        attributes.put("brand", product.getBrand());
+        auditLog.setDetails(details);
         logAction(auditLog);
     }
 
@@ -81,7 +97,9 @@ public class AuditLogService {
         auditLog.setAction(Action.CREATION);
         auditLog.setEntityType(EntityType.CATEGORY);
         auditLog.setEntityId(savedCategory.getId());
-        auditLog.setDetails("Category created: " + savedCategory.getName());
+        ObjectNode details = messageDetails("Category created");
+        details.putObject("attributes").put("name", savedCategory.getName());
+        auditLog.setDetails(details);
         logAction(auditLog);
     }
 
@@ -90,7 +108,9 @@ public class AuditLogService {
         auditLog.setAction(Action.DELETION);
         auditLog.setEntityType(EntityType.CATEGORY);
         auditLog.setEntityId(category.getId());
-        auditLog.setDetails("Category deleted: " + category.getName());
+        ObjectNode details = messageDetails("Category deleted");
+        details.putObject("attributes").put("name", category.getName());
+        auditLog.setDetails(details);
         logAction(auditLog);
     }
 
@@ -108,8 +128,7 @@ public class AuditLogService {
         auditLog.setAction(Action.UPDATE);
         auditLog.setEntityType(EntityType.STOCK);
         auditLog.setEntityId(stock.getProduct().getId());
-        auditLog.setDetails("Stock updated for product ID: " + stock.getProduct().getId() + ". Quantity changed from "
-                + from.quantity() + " to " + stock.getQuantity());
+        auditLog.setDetails(changeDetails("Stock updated", "quantity", from.quantity(), stock.getQuantity()));
         logAction(auditLog);
     }
 
@@ -118,29 +137,44 @@ public class AuditLogService {
         auditLog.setAction(Action.CREATION);
         auditLog.setEntityType(EntityType.STOCK);
         auditLog.setEntityId(stock.getProduct().getId());
-        auditLog.setDetails("Stock created with quantity: " + stock.getQuantity() + " for product ID: " + stock.getProduct().getId());
+        ObjectNode details = messageDetails("Stock created");
+        ObjectNode attributes = details.putObject("attributes");
+        attributes.put("quantity", stock.getQuantity());
+        attributes.put("productId", stock.getProduct().getId());
+        auditLog.setDetails(details);
         logAction(auditLog);
     }
 
-    private String buildProductChanges(ProductSnapshot before, Product after) {
-        StringJoiner changes = new StringJoiner("; ");
+    private ObjectNode buildProductChanges(ProductSnapshot before, Product after) {
+        ObjectNode details = messageDetails("Product updated");
+        ArrayNode changes = details.putArray("changes");
         addChange(changes, "name", before.name(), after.getName());
         addChange(changes, "brand", before.brand(), after.getBrand());
         addChange(changes, "price", before.price(), after.getPrice());
         addChange(changes, "description", before.description(), after.getDescription());
         addChange(changes, "available", before.available(), after.isAvailable());
-        return changes.length() == 0 ? "Product updated with no field changes" : changes.toString();
+        if (changes.isEmpty()) {
+            details.put("message", "Product updated with no field changes");
+        }
+        return details;
     }
 
-    private String buildCategoryChanges(CategorySnapshot before, Category after) {
-        StringJoiner changes = new StringJoiner("; ");
+    private ObjectNode buildCategoryChanges(CategorySnapshot before, Category after) {
+        ObjectNode details = messageDetails("Category updated");
+        ArrayNode changes = details.putArray("changes");
         addChange(changes, "name", before.name(), after.getName());
-        return changes.length() == 0 ? "Category updated with no field changes" : changes.toString();
+        if (changes.isEmpty()) {
+            details.put("message", "Category updated with no field changes");
+        }
+        return details;
     }
 
-    private void addChange(StringJoiner changes, String field, Object before, Object after) {
+    private void addChange(ArrayNode changes, String field, Object before, Object after) {
         if (!Objects.equals(before, after)) {
-            changes.add(field + ": " + before + " -> " + after);
+            ObjectNode change = changes.addObject();
+            change.put("field", field);
+            change.set("before", objectMapper.valueToTree(before));
+            change.set("after", objectMapper.valueToTree(after));
         }
     }
 
@@ -149,17 +183,32 @@ public class AuditLogService {
         auditLog.setAction(Action.CREATION);
         auditLog.setEntityType(EntityType.ORDER);
         auditLog.setEntityId(order.getId());
-        auditLog.setDetails("Order created with ID: " + order.getId());
+        ObjectNode details = messageDetails("Order created");
+        details.putObject("attributes").put("orderId", order.getId());
+        auditLog.setDetails(details);
         logAction(auditLog);
     }
 
-    public void logOrderCancellation(Order order){
+    public void logOrderCancellation(OrderStatus before, Order order){
         AuditLog auditLog = new AuditLog();
         auditLog.setAction(Action.UPDATE);
         auditLog.setEntityType(EntityType.ORDER);
         auditLog.setEntityId(order.getId());
-        auditLog.setDetails("Order cancelled with ID: " + order.getId());
+        auditLog.setDetails(changeDetails("Order cancelled", "status", before, order.getStatus()));
         logAction(auditLog);
+    }
+
+    private ObjectNode messageDetails(String message) {
+        ObjectNode details = objectMapper.createObjectNode();
+        details.put("message", message);
+        return details;
+    }
+
+    private ObjectNode changeDetails(String message, String field, Object before, Object after) {
+        ObjectNode details = messageDetails(message);
+        ArrayNode changes = details.putArray("changes");
+        addChange(changes, field, before, after);
+        return details;
     }
 
     public record ProductSnapshot(String name, String brand, BigDecimal price, String description, Boolean available) {
