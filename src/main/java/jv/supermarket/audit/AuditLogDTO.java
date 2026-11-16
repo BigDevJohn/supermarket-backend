@@ -12,7 +12,7 @@ public record AuditLogDTO(
         Action action,
         EntityType entityType,
         Long entityId,
-        JsonNode details,
+        @tools.jackson.databind.annotation.JsonSerialize(using = Jackson2JsonNodeSerializer.class) JsonNode details,
         LocalDateTime createdAt,
         Long userId,
         String userName) {
