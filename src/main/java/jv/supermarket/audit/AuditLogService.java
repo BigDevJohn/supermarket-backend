@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import jv.supermarket.audit.enums.Action;
 import jv.supermarket.audit.enums.EntityType;
 import jv.supermarket.category.Category;
+import jv.supermarket.order.Order;
 import jv.supermarket.product.Product;
 import jv.supermarket.shared.customexception.ResourceNotFoundException;
 import jv.supermarket.stock.Stock;
@@ -75,7 +76,7 @@ public class AuditLogService {
         logAction(auditLog);
     }
 
-    public void logCategoryCreation(Category savedCategory) {
+    public void logCategoryCreation(Category savedCategory) { 
         AuditLog auditLog = new AuditLog();
         auditLog.setAction(Action.CREATION);
         auditLog.setEntityType(EntityType.CATEGORY);
@@ -141,6 +142,24 @@ public class AuditLogService {
         if (!Objects.equals(before, after)) {
             changes.add(field + ": " + before + " -> " + after);
         }
+    }
+
+    public void logOrderCreation(Order order){
+        AuditLog auditLog = new AuditLog();
+        auditLog.setAction(Action.CREATION);
+        auditLog.setEntityType(EntityType.ORDER);
+        auditLog.setEntityId(order.getId());
+        auditLog.setDetails("Order created with ID: " + order.getId());
+        logAction(auditLog);
+    }
+
+    public void logOrderCancellation(Order order){
+        AuditLog auditLog = new AuditLog();
+        auditLog.setAction(Action.UPDATE);
+        auditLog.setEntityType(EntityType.ORDER);
+        auditLog.setEntityId(order.getId());
+        auditLog.setDetails("Order cancelled with ID: " + order.getId());
+        logAction(auditLog);
     }
 
     public record ProductSnapshot(String name, String brand, BigDecimal price, String description, Boolean available) {

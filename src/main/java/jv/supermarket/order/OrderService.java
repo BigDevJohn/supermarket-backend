@@ -13,6 +13,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
+import jv.supermarket.audit.AuditLogService;
 import jv.supermarket.cart.Cart;
 import jv.supermarket.cart.CartItem;
 import jv.supermarket.cart.CartService;
@@ -46,9 +47,11 @@ public class OrderService {
 
     final StockService stockService;
 
+    final AuditLogService auditLogService;
+
     OrderService(CartService cartService, OrderItemRepository itemRepo, OrderRepository orderRepo,
             UserService userService, ProductRepository productRepo, ProductService productService,
-            StockService stockService) {
+            StockService stockService, AuditLogService auditLogService) {
         this.cartService = cartService;
         this.itemRepo = itemRepo;
         this.orderRepo = orderRepo;
@@ -56,6 +59,7 @@ public class OrderService {
         this.productRepo = productRepo;
         this.productService = productService;
         this.stockService = stockService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -86,6 +90,8 @@ public class OrderService {
         order = orderRepo.save(order);
         log.info("[createOrder] Order created successfully with ID: {} for user ID: {}", order.getId(), user.getId());
 
+        auditLogService.logOrderCreation(order);
+
         return convertOrderToDTO(order);
     }
 
@@ -106,6 +112,7 @@ public class OrderService {
                 }
             }
         }
+
         log.warn("[getOrder] Access denied to order ID: {} for user ID: {}", id, user.getId());
         throw new AccessDeniedException("Order not found for this client");
     }
@@ -141,6 +148,7 @@ public class OrderService {
                 order.setStatus(OrderStatus.CANCELLED);
                 Order saved = orderRepo.save(order);
                 log.info("[cancelOrder] Order ID: {} cancelled by admin user ID: {}", orderId, user.getId());
+                auditLogService.logOrderCancellation(order);
                 return saved;
             } else if (role.getName().equals("ROLE_CUSTOMER")) {
                 if (order.getUser().getId().equals(user.getId())) {
