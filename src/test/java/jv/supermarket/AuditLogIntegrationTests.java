@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -100,15 +101,39 @@ class AuditLogIntegrationTests {
     @Test
     @WithUserDetails("admin@supermarket.local")
     void adminCanListStockAudits() throws Exception {
-        mvc.perform(get("/supermarket/audit/by-entity-type/STOCK"))
+        mvc.perform(put("/supermarket/stock/2/exits")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"quantity": 5}
+                        """)
+                .with(csrf()))
                 .andExpect(status().isOk());
+
+        mvc.perform(get("/supermarket/audit/by-entity-type/STOCK"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].entityType").value("STOCK"))
+                .andExpect(jsonPath("$.content[0].action").value("UPDATE"))
+                .andExpect(jsonPath("$.content[0].entityId").value(2))
+                .andExpect(jsonPath("$.content[0].details").value(org.hamcrest.Matchers.containsString("from 32 to 27")));
     }
 
     @Test
     @WithUserDetails("employee@supermarket.local")
     void employeeCanListStockAudits() throws Exception {
-        mvc.perform(get("/supermarket/audit/by-entity-type/STOCK"))
+        mvc.perform(put("/supermarket/stock/2/entries")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"quantity": 5}
+                        """)
+                .with(csrf()))
                 .andExpect(status().isOk());
+
+        mvc.perform(get("/supermarket/audit/by-entity-type/STOCK"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].entityType").value("STOCK"))
+                .andExpect(jsonPath("$.content[0].action").value("UPDATE"))
+                .andExpect(jsonPath("$.content[0].entityId").value(2))
+                .andExpect(jsonPath("$.content[0].details").value(org.hamcrest.Matchers.containsString("from 32 to 37")));
     }
 
     @Test
