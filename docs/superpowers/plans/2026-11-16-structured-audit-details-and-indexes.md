@@ -10,6 +10,71 @@
 
 ---
 
+## Audit event documentation
+
+Every audit record contains the common metadata below:
+
+| Field | Description |
+| --- | --- |
+| `action` | Operation type: `CREATION`, `UPDATE`, or `DELETION`. |
+| `entityType` | Audited resource type: `PRODUCT`, `CATEGORY`, `ORDER`, or `STOCK`. |
+| `entityId` | Identifier of the affected resource. For stock events, this is the related product ID. |
+| `userId` / `userName` | Authenticated user who performed the operation. |
+| `createdAt` | Timestamp assigned when the audit record is created. |
+| `details` | Structured JSON payload described below; legacy null values remain null. |
+
+Creation and deletion events use an `attributes` object to preserve the relevant state:
+
+| Event | `details.message` | `details.attributes` |
+| --- | --- | --- |
+| Product creation | `Product created` | `name`, `brand`, `price`, `description`, `available` |
+| Product deletion | `Product deleted` | `name`, `brand` |
+| Category creation | `Category created` | `name` |
+| Category deletion | `Category deleted` | `name` |
+| Stock creation | `Stock created` | `quantity`, `productId` |
+| Order creation | `Order created` | `orderId` |
+
+Update events use a `changes` array. Each entry contains `field`, `before`, and
+`after`; only fields whose values changed are included. Product updates can
+record `name`, `brand`, `price`, `description`, and `available`. Category
+updates record `name`, and stock updates record `quantity`.
+
+For example, a stock update is represented as:
+
+```json
+{
+  "message": "Stock updated",
+  "changes": [
+    { "field": "quantity", "before": 32, "after": 27 }
+  ]
+}
+```
+
+Order cancellation is an update event with `message` equal to `Order cancelled`
+and a `status` change, including the status before cancellation and
+`CANCELLED` after cancellation:
+
+```json
+{
+  "message": "Order cancelled",
+  "changes": [
+    { "field": "status", "before": "WAITING_PAYMENT", "after": "CANCELLED" }
+  ]
+}
+```
+
+If a product or category update does not change any tracked field, the payload
+still identifies the event with `message` set to `Product updated with no field
+changes` or `Category updated with no field changes`, respectively, and an
+empty `changes` array.
+
+The V4 migration wraps pre-existing non-null text details as
+`{ "message": "original text" }`; null details remain null. The structured
+payload is returned unchanged by the audit DTO, so API consumers can query
+numeric, boolean, string, and null values without parsing a formatted string.
+
+---
+
 ### Task 1: Add the JSON-and-index schema migration
 
 **Files:**
