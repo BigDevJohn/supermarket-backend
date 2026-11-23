@@ -49,8 +49,8 @@ public class TestDatabaseInitializer implements CommandLineRunner {
         User employee = new User("kleber", "employee@supermarket.local", "123456");
         User client = new User("joao", "customer@supermarket.local", "123456");
 
-        employee = userService.saveEmployee(employee);
-        client = userService.saveClient(client);
+        userService.saveEmployee(employee);
+        userService.saveClient(client);
 
         // Create categories
         Category c1 = categoryRepository.save(new Category("Eletrônicos"));
