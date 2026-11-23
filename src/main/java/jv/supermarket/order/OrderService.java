@@ -138,33 +138,43 @@ public class OrderService {
                 });
     }
 
-    @Transactional 
+    @Transactional
     public Order cancelOrder(Long orderId) {
         log.info("[cancelOrder] Attempting to cancel order with ID: {}", orderId);
         User user = userService.getLoggedUser();
         Order order = getOrderById(orderId);
 
-        for (Role role : user.getRoles()) {
-            if (role.getName().equals("ROLE_ADMIN")) {
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            log.warn("[cancelOrder] Order ID: {} is already cancelled", orderId);
+            throw new IllegalStateException("Order is already cancelled");
+        }
+
+        if (user.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_ADMIN"))) {
+            OrderStatus before = order.getStatus();
+            order.setStatus(OrderStatus.CANCELLED);
+            order = orderRepo.save(order);
+            log.info("[cancelOrder] Order ID: {} cancelled by admin user ID: {}", orderId, user.getId());
+            auditLogService.logOrderCancellation(before, order);
+        } else if (user.getRoles().stream().anyMatch(r -> r.getName().equals("ROLE_CUSTOMER"))) {
+            if (order.getUser().getId().equals(user.getId())) {
                 OrderStatus before = order.getStatus();
                 order.setStatus(OrderStatus.CANCELLED);
-                Order saved = orderRepo.save(order);
-                log.info("[cancelOrder] Order ID: {} cancelled by admin user ID: {}", orderId, user.getId());
+                order = orderRepo.save(order);
                 auditLogService.logOrderCancellation(before, order);
-                return saved;
-            } else if (role.getName().equals("ROLE_CUSTOMER")) {
-                if (order.getUser().getId().equals(user.getId())) {
-                    OrderStatus before = order.getStatus();
-                    order.setStatus(OrderStatus.CANCELLED);
-                    Order saved = orderRepo.save(order);
-                    auditLogService.logOrderCancellation(before, order);
-                    log.info("[cancelOrder] Order ID: {} cancelled by owner user ID: {}", orderId, user.getId());
-                    return saved;
-                }
+                log.info("[cancelOrder] Order ID: {} cancelled by owner user ID: {}", orderId, user.getId());
+            } else {
+                log.warn("[cancelOrder] Access denied to cancel order ID: {} for user ID: {}", orderId, user.getId());
+                throw new AccessDeniedException("Order not found for this client");
             }
+
+        } else {
+            log.warn("[cancelOrder] Access denied to cancel order ID: {} for user ID: {}", orderId, user.getId());
+            throw new AccessDeniedException("User has no permission to cancel this order");
         }
-        log.warn("[cancelOrder] Access denied to cancel order ID: {} for user ID: {}", orderId, user.getId());
-        throw new AccessDeniedException("Order not found for this client");
+
+        returnOrderItemsToStock(order);
+        return order;
+
     }
 
     private void checkCartStock(Cart cart) {
@@ -223,5 +233,16 @@ public class OrderService {
                 .collect(Collectors.toSet()));
 
         return dto;
+    }
+
+    private void returnOrderItemsToStock(Order order) {
+        log.info("[returnOrderItemsToStock] Returning items of order ID: {} to stock", order.getId());
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+            int quantity = item.getQuantity();
+            stockService.stockEntry(product.getId(), quantity);
+            log.info("[returnOrderItemsToStock] Returned {} units of product '{}' (ID: {}) to stock",
+                    quantity, product.getName(), product.getId());
+        }
     }
 }
