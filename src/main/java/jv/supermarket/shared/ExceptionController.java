@@ -98,6 +98,16 @@ public class ExceptionController {
         return ResponseEntity.status(status).body(error);
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiError> illegalState(IllegalStateException e, HttpServletRequest request) {
+        log.warn("[illegalState] {} - {}", request.getRequestURI(), e.getMessage());
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        ArrayList<String> details = new ArrayList<>();
+        details.add(e.getMessage());
+        ApiError error = new ApiError(Instant.now(), status.value(), "Invalid state", request.getRequestURI(), details);
+        return ResponseEntity.status(status).body(error);
+    }
+
     @ExceptionHandler(BadAuthRequestException.class)
     public ResponseEntity<ApiError> authError(BadAuthRequestException e, HttpServletRequest request) {
         log.warn("[authError] {} - {}", request.getRequestURI(), e.getMessage());

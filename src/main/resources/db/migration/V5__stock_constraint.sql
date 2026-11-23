@@ -1,0 +1,1 @@
+ALTER TABLE stock ADD CONSTRAINT chk_stock_quantity CHECK (quantity >= 0);

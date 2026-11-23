@@ -45,6 +45,10 @@ public class StockService {
 
     @Transactional
     public StockDTO stockEntry(Long productId, Integer quantity) {
+        if (quantity < 0) {
+            log.warn("[stockEntry] Quantity to add cannot be negative: {}", quantity);
+            throw new IllegalArgumentException("Quantity to add cannot be negative");
+        }
         log.info("[stockEntry] Adding quantity: {} to stock for product ID: {}", quantity, productId);
         Stock stock = stockRepository.findById(productId)
                 .orElseThrow(() -> {
@@ -62,22 +66,25 @@ public class StockService {
         return new StockDTO(stock.getQuantity());
     }
 
-    @Transactional 
+    @Transactional
     public StockDTO stockExit(Long productId, Integer quantity) {
+        if (quantity < 0) {
+            log.warn("[stockExit] Quantity to remove cannot be negative: {}", quantity);
+            throw new IllegalArgumentException("Quantity to remove cannot be negative");
+        }
         log.info("[stockExit] Removing quantity: {} from stock for product ID: {}", quantity, productId);
         Stock stock = stockRepository.findById(productId)
                 .orElseThrow(() -> {
                     log.warn("[stockExit] Stock with product id: {} not found", productId);
                     return new ResourceNotFoundException("Stock with product id: " + productId + " not found");
                 });
-        if (stock.getQuantity() < quantity) {
+        AuditLogService.StockSnapshot before = AuditLogService.StockSnapshot.from(stock);
+        int updatedRows = stockRepository.decrementStock(productId, quantity);
+        if (updatedRows == 0) {
             log.warn("[stockExit] Insufficient stock for product ID: {}. Available: {}, Requested: {}", productId,
                     stock.getQuantity(), quantity);
             throw new OutOfStockException("Insufficient stock quantity");
         }
-        AuditLogService.StockSnapshot before = AuditLogService.StockSnapshot.from(stock);
-        stock.setQuantity(stock.getQuantity() - quantity);
-        stock = stockRepository.save(stock);
         auditLogService.logStockUpdate(before, stock);
         log.info("[stockExit] Stock updated successfully for product ID: {}. New quantity: {}", productId,
                 stock.getQuantity());
