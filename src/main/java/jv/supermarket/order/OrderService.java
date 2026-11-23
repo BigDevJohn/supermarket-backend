@@ -142,7 +142,11 @@ public class OrderService {
     public Order cancelOrder(Long orderId) {
         log.info("[cancelOrder] Attempting to cancel order with ID: {}", orderId);
         User user = userService.getLoggedUser();
-        Order order = getOrderById(orderId);
+        Order order = orderRepo.findForCancellationById(orderId)
+                .orElseThrow(() -> {
+                    log.warn("[cancelOrder] Order not found with id: {}", orderId);
+                    return new ResourceNotFoundException("Order not found with id: " + orderId);
+                });
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
             log.warn("[cancelOrder] Order ID: {} is already cancelled", orderId);

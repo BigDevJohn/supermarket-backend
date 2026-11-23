@@ -105,6 +105,23 @@ class AuditLogIntegrationTests {
     }
 
     @Test
+    @WithUserDetails("customer@supermarket.local")
+    void cancellingCustomerOrderTwiceIsRejectedWithoutReturningStockAgain() throws Exception {
+        mvc.perform(post("/supermarket/order/create").with(csrf()))
+                .andExpect(status().isCreated());
+
+        User customer = userRepository.findByEmail("customer@supermarket.local");
+        Order order = orderRepository.findByUserId(customer.getId(),
+                PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "id"))).getContent().get(0);
+
+        mvc.perform(delete("/supermarket/order/" + order.getId() + "/cancel").with(csrf()))
+                .andExpect(status().isOk());
+
+        mvc.perform(delete("/supermarket/order/" + order.getId() + "/cancel").with(csrf()))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     @WithUserDetails("admin@supermarket.local")
     void adminCanListStockAudits() throws Exception {
         mvc.perform(put("/supermarket/stock/2/exits")

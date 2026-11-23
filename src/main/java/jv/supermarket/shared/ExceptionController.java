@@ -101,7 +101,7 @@ public class ExceptionController {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiError> illegalState(IllegalStateException e, HttpServletRequest request) {
         log.warn("[illegalState] {} - {}", request.getRequestURI(), e.getMessage());
-        HttpStatus status = HttpStatus.BAD_REQUEST;
+        HttpStatus status = HttpStatus.CONFLICT;
         ArrayList<String> details = new ArrayList<>();
         details.add(e.getMessage());
         ApiError error = new ApiError(Instant.now(), status.value(), "Invalid state", request.getRequestURI(), details);
@@ -125,16 +125,6 @@ public class ExceptionController {
         ArrayList<String> details = new ArrayList<>();
         details.add(e.getMessage());
         ApiError error = new ApiError(Instant.now(), status.value(), "Access denied", request.getRequestURI(), details);
-        return ResponseEntity.status(status).body(error);
-    }
-
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiError> redundantStateChange(IllegalStateException e, HttpServletRequest request) {
-        log.warn("[redundantStateChange] {} - {}", request.getRequestURI(), e.getMessage());
-        HttpStatus status = HttpStatus.CONFLICT;
-        ArrayList<String> details = new ArrayList<>();
-        details.add(e.getMessage());
-        ApiError error = new ApiError(Instant.now(), status.value(), "Unnecessary state change", request.getRequestURI(), details);
         return ResponseEntity.status(status).body(error);
     }
 

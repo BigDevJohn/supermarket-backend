@@ -140,6 +140,30 @@ public class SupermarketApplicationTests {
 				.andExpect(jsonPath("$.quantity").value(27));
 	}
 
+	@Test
+	@WithUserDetails("admin@supermarket.local")
+	public void testExitStockRejectsNegativeQuantity() throws Exception {
+		mvc.perform(put("/supermarket/stock/2/exits")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"quantity": -1}
+						""")
+				.with(csrf()))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@WithUserDetails("admin@supermarket.local")
+	public void testExitStockRejectsInsufficientQuantity() throws Exception {
+		mvc.perform(put("/supermarket/stock/2/exits")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"quantity": 33}
+						""")
+				.with(csrf()))
+				.andExpect(status().isBadRequest());
+	}
+
 
 	@Test
 	@WithUserDetails("admin@supermarket.local")

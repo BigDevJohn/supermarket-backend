@@ -45,9 +45,9 @@ public class StockService {
 
     @Transactional
     public StockDTO stockEntry(Long productId, Integer quantity) {
-        if (quantity < 0) {
-            log.warn("[stockEntry] Quantity to add cannot be negative: {}", quantity);
-            throw new IllegalArgumentException("Quantity to add cannot be negative");
+        if (quantity == null || quantity <= 0) {
+            log.warn("[stockEntry] Quantity to add must be positive: {}", quantity);
+            throw new IllegalArgumentException("Quantity to add must be positive");
         }
         log.info("[stockEntry] Adding quantity: {} to stock for product ID: {}", quantity, productId);
         Stock stock = stockRepository.findById(productId)
@@ -56,8 +56,11 @@ public class StockService {
                     return new ResourceNotFoundException("Stock with product id: " + productId + " not found");
                 });
         AuditLogService.StockSnapshot before = AuditLogService.StockSnapshot.from(stock);
+        int updatedRows = stockRepository.incrementStock(productId, quantity);
+        if (updatedRows == 0) {
+            throw new ResourceNotFoundException("Stock with product id: " + productId + " not found");
+        }
         stock.setQuantity(stock.getQuantity() + quantity);
-        stock = stockRepository.save(stock);
         auditLogService.logStockUpdate(before, stock);
 
         log.info("[stockEntry] Stock updated successfully for product ID: {}. New quantity: {}", productId,
@@ -68,9 +71,9 @@ public class StockService {
 
     @Transactional
     public StockDTO stockExit(Long productId, Integer quantity) {
-        if (quantity < 0) {
-            log.warn("[stockExit] Quantity to remove cannot be negative: {}", quantity);
-            throw new IllegalArgumentException("Quantity to remove cannot be negative");
+        if (quantity == null || quantity <= 0) {
+            log.warn("[stockExit] Quantity to remove must be positive: {}", quantity);
+            throw new IllegalArgumentException("Quantity to remove must be positive");
         }
         log.info("[stockExit] Removing quantity: {} from stock for product ID: {}", quantity, productId);
         Stock stock = stockRepository.findById(productId)
@@ -85,6 +88,7 @@ public class StockService {
                     stock.getQuantity(), quantity);
             throw new OutOfStockException("Insufficient stock quantity");
         }
+        stock.setQuantity(stock.getQuantity() - quantity);
         auditLogService.logStockUpdate(before, stock);
         log.info("[stockExit] Stock updated successfully for product ID: {}. New quantity: {}", productId,
                 stock.getQuantity());
@@ -92,6 +96,9 @@ public class StockService {
     }
 
     public boolean isStockAvailable(Integer quantity, Long productId) {
+        if (quantity == null || quantity <= 0) {
+            return false;
+        }
         log.info("[isStockAvailable] Checking if stock quantity {} is available for product ID: {}", quantity,
                 productId);
         Stock stock = stockRepository.findById(productId)
