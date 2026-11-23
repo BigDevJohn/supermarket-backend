@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
+import jv.supermarket.auth.TokenService;
 import jv.supermarket.cart.Cart;
 import jv.supermarket.cart.CartRepository;
 import jv.supermarket.shared.customexception.BadAuthRequestException;
@@ -29,11 +30,14 @@ public class UserService {
 
     private final BCryptPasswordEncoder passwordEncoder;
 
-    UserService(UserRepository userRepository, CartRepository cartRepository, RoleRepository roleRepository, BCryptPasswordEncoder passwordEncoder) {
+    private final TokenService tokenService;
+
+    UserService(UserRepository userRepository, CartRepository cartRepository, RoleRepository roleRepository, BCryptPasswordEncoder passwordEncoder, TokenService tokenService) {
         this.userRepository = userRepository;
         this.cartRepository = cartRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.tokenService = tokenService;
     }
 
     @Transactional
@@ -61,7 +65,7 @@ public class UserService {
     }
 
     @Transactional
-    public User saveAdmin(User user) {
+    public String saveAdmin(User user) {
         log.info("[saveAdmin] Registering new admin");
         if (existsByEmail(user.getEmail())) {
             log.warn("[saveAdmin] Registration failed: email already exists");
@@ -74,11 +78,12 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         log.info("[saveAdmin] Admin registered successfully with ID: {}", savedUser.getId());
-        return savedUser;
+        String token = tokenService.generateToken(savedUser);
+        return token;
     }
 
     @Transactional
-    public User saveEmployee(User user) {
+    public String saveEmployee(User user) {
         log.info("[saveEmployee] Registering new employee");
         if (existsByEmail(user.getEmail())) {
             log.warn("[saveEmployee] Registration failed: email already exists");
@@ -90,15 +95,15 @@ public class UserService {
         user.getRoles().add(role);
 
         user = userRepository.save(user);
-
+        log.info("[saveEmployee] Employee registered successfully with ID: {}", user.getId());
         if (user.getCart() == null) {
             log.info("[saveEmployee] Initializing cart for employee ID: {}", user.getId());
             Cart cart = new Cart();
             cart.setUser(user);
             cartRepository.save(cart);
         }
-        log.info("[saveEmployee] Employee registered successfully with ID: {}", user.getId());
-        return user;
+        String token = tokenService.generateToken(user);
+        return token;
     }
 
     public User getLoggedUser() {
