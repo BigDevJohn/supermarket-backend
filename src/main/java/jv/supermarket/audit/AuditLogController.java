@@ -33,15 +33,13 @@ public class AuditLogController {
             @PathVariable String entityType,
             @PathVariable Long entityId,
             @PageableDefault(size = 20) Pageable pageable) {
-        EntityType type = EntityType.valueOf(entityType.toUpperCase(Locale.ROOT));
-        return ResponseEntity.ok(auditLogService.getAuditLogsByEntity(type, entityId, pageable));
+        return ResponseEntity.ok(auditLogService.getAuditLogsByEntity(entityType, entityId, pageable));
     }
 
     @GetMapping("/by-entity-type/{entityType}")
     public ResponseEntity<Page<AuditLogDTO>> getAuditLogsByEntityType(
             @PathVariable String entityType,
             @PageableDefault(size = 20) Pageable pageable) {
-        EntityType type = EntityType.valueOf(entityType.toUpperCase(Locale.ROOT));
-        return ResponseEntity.ok(auditLogService.getAuditLogsByEntityType(type, pageable));
+        return ResponseEntity.ok(auditLogService.getAuditLogsByEntityType(entityType, pageable));
     }
 }

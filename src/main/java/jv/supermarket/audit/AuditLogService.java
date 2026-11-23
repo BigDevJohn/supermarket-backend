@@ -1,6 +1,7 @@
 package jv.supermarket.audit;
 
 import java.math.BigDecimal;
+import java.util.Locale;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,14 +45,25 @@ public class AuditLogService {
         return AuditLogDTO.from(auditLog);
     }
 
-    public Page<AuditLogDTO> getAuditLogsByEntity(EntityType entityType, Long entityId, Pageable pageable) {
-        return auditLogRepository.findByEntityTypeAndEntityIdOrderByCreatedAtDesc(entityType, entityId, pageable)
-                .map(AuditLogDTO::from);
+    public Page<AuditLogDTO> getAuditLogsByEntity(String entityType, Long entityId, Pageable pageable) {
+        try {
+            EntityType type = EntityType.valueOf(entityType.toUpperCase(Locale.ROOT));
+            return auditLogRepository.findByEntityTypeAndEntityIdOrderByCreatedAtDesc(type, entityId, pageable)
+                    .map(AuditLogDTO::from);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundException("Invalid entity type: " + entityType);
+        }
     }
 
-    public Page<AuditLogDTO> getAuditLogsByEntityType(EntityType entityType, Pageable pageable) {
-        return auditLogRepository.findByEntityTypeOrderByCreatedAtDesc(entityType, pageable)
-                .map(AuditLogDTO::from);
+    public Page<AuditLogDTO> getAuditLogsByEntityType(String entityType, Pageable pageable) {
+        try {
+            EntityType type = EntityType.valueOf(entityType.toUpperCase(Locale.ROOT));
+            return auditLogRepository.findByEntityTypeOrderByCreatedAtDesc(type, pageable)
+                    .map(AuditLogDTO::from);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundException("Invalid entity type: " + entityType);
+        }
+
     }
 
     public void logProductCreation(Product product) {
@@ -92,7 +104,7 @@ public class AuditLogService {
         logAction(auditLog);
     }
 
-    public void logCategoryCreation(Category savedCategory) { 
+    public void logCategoryCreation(Category savedCategory) {
         AuditLog auditLog = new AuditLog();
         auditLog.setAction(Action.CREATION);
         auditLog.setEntityType(EntityType.CATEGORY);
@@ -123,7 +135,7 @@ public class AuditLogService {
         logAction(auditLog);
     }
 
-     public void logStockUpdate(StockSnapshot from, Stock stock) {
+    public void logStockUpdate(StockSnapshot from, Stock stock) {
         AuditLog auditLog = new AuditLog();
         auditLog.setAction(Action.UPDATE);
         auditLog.setEntityType(EntityType.STOCK);
@@ -178,7 +190,7 @@ public class AuditLogService {
         }
     }
 
-    public void logOrderCreation(Order order){
+    public void logOrderCreation(Order order) {
         AuditLog auditLog = new AuditLog();
         auditLog.setAction(Action.CREATION);
         auditLog.setEntityType(EntityType.ORDER);
@@ -189,7 +201,7 @@ public class AuditLogService {
         logAction(auditLog);
     }
 
-    public void logOrderCancellation(OrderStatus before, Order order){
+    public void logOrderCancellation(OrderStatus before, Order order) {
         AuditLog auditLog = new AuditLog();
         auditLog.setAction(Action.UPDATE);
         auditLog.setEntityType(EntityType.ORDER);
