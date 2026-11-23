@@ -43,8 +43,7 @@ public class AdminController {
     })
     @PostMapping("/createEmployee")
     public ResponseEntity<AuthResponseDTO> saveEmployee(@RequestBody @Valid User user) {
-        User savedUser = userService.saveEmployee(user);
-        String token = tokenService.generateToken(savedUser);
+        String token = userService.saveEmployee(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponseDTO(token));
     }
 }
