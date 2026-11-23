@@ -7,9 +7,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jv.supermarket.product.Product;
+import jv.supermarket.shared.Auditable;
 
 @Entity
-public class Stock {
+public class Stock extends Auditable{
     @Id
     private Long id;
 

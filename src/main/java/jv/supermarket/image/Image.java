@@ -10,9 +10,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jv.supermarket.product.Product;
+import jv.supermarket.shared.Auditable;
 
 @Entity
-public class Image {
+public class Image extends Auditable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

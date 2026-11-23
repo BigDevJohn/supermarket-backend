@@ -5,12 +5,15 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
+import jv.supermarket.audit.AuditLogService;
 import jv.supermarket.cart.Cart;
 import jv.supermarket.cart.CartItem;
 import jv.supermarket.cart.CartService;
@@ -28,6 +31,8 @@ import jv.supermarket.user.UserService;
 @Service
 public class OrderService {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
     final CartService cartService;
 
     final OrderItemRepository itemRepo;
@@ -42,9 +47,11 @@ public class OrderService {
 
     final StockService stockService;
 
+    final AuditLogService auditLogService;
+
     OrderService(CartService cartService, OrderItemRepository itemRepo, OrderRepository orderRepo,
             UserService userService, ProductRepository productRepo, ProductService productService,
-            StockService stockService) {
+            StockService stockService, AuditLogService auditLogService) {
         this.cartService = cartService;
         this.itemRepo = itemRepo;
         this.orderRepo = orderRepo;
@@ -52,13 +59,16 @@ public class OrderService {
         this.productRepo = productRepo;
         this.productService = productService;
         this.stockService = stockService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
     public OrderDTO createOrder() {
+        log.info("[createOrder] Initializing order creation for logged user");
         User user = userService.getLoggedUser();
         Cart cart = cartService.getCartById(user.getId());
         if (cart.getItems().isEmpty()) {
+            log.warn("[createOrder] Order creation failed: Cart is empty for user ID: {}", user.getId());
             throw new ResourceNotFoundException(
                     "Cart is empty. Add items to it first before placing an order");
         }
@@ -78,64 +88,94 @@ public class OrderService {
         cartService.clearCart(cart.getId());
 
         order = orderRepo.save(order);
+        log.info("[createOrder] Order created successfully with ID: {} for user ID: {}", order.getId(), user.getId());
+
+        auditLogService.logOrderCreation(order);
 
         return convertOrderToDTO(order);
     }
 
     @Transactional
     public OrderDTO getOrder(Long id) {
+        log.info("[getOrder] Fetching order with ID: {}", id);
         User user = userService.getLoggedUser();
         Order order = getOrderById(id);
 
         for (Role role : user.getRoles()) {
             if (role.getName().equals("ROLE_ADMIN")) {
+                log.info("[getOrder] Order ID: {} accessed by admin user ID: {}", id, user.getId());
                 return convertOrderToDTO(order);
             } else if (role.getName().equals("ROLE_CUSTOMER")) {
                 if (order.getUser().getId().equals(user.getId())) {
+                    log.info("[getOrder] Order ID: {} accessed by owner user ID: {}", id, user.getId());
                     return convertOrderToDTO(order);
                 }
             }
         }
+
+        log.warn("[getOrder] Access denied to order ID: {} for user ID: {}", id, user.getId());
         throw new AccessDeniedException("Order not found for this client");
     }
 
     public Page<OrderDTO> getOrdersByUser(Pageable pageable) {
-        Page<Order> orders = orderRepo.findByUserId(userService.getLoggedUser().getId(), pageable);
+        Long userId = userService.getLoggedUser().getId();
+        log.info("[getOrdersByUser] Fetching orders for logged user ID: {}", userId);
+        Page<Order> orders = orderRepo.findByUserId(userId, pageable);
         if (orders == null || orders.isEmpty()) {
+            log.warn("[getOrdersByUser] No orders found for user ID: {}", userId);
             throw new ResourceNotFoundException("The user has no orders");
         }
+        log.info("[getOrdersByUser] Found {} order(s) for user ID: {}", orders.getTotalElements(), userId);
         return orders.map(order -> convertOrderToDTO(order));
     }
 
     public Order getOrderById(Long id) {
+        log.info("[getOrderById] Fetching order with ID: {}", id);
         return orderRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("[getOrderById] Order not found with id: {}", id);
+                    return new ResourceNotFoundException("Order not found with id: " + id);
+                });
     }
 
+    @Transactional 
     public Order cancelOrder(Long orderId) {
+        log.info("[cancelOrder] Attempting to cancel order with ID: {}", orderId);
         User user = userService.getLoggedUser();
         Order order = getOrderById(orderId);
 
         for (Role role : user.getRoles()) {
             if (role.getName().equals("ROLE_ADMIN")) {
+                OrderStatus before = order.getStatus();
                 order.setStatus(OrderStatus.CANCELLED);
-                return orderRepo.save(order);
+                Order saved = orderRepo.save(order);
+                log.info("[cancelOrder] Order ID: {} cancelled by admin user ID: {}", orderId, user.getId());
+                auditLogService.logOrderCancellation(before, order);
+                return saved;
             } else if (role.getName().equals("ROLE_CUSTOMER")) {
                 if (order.getUser().getId().equals(user.getId())) {
+                    OrderStatus before = order.getStatus();
                     order.setStatus(OrderStatus.CANCELLED);
-                    return orderRepo.save(order);
+                    Order saved = orderRepo.save(order);
+                    auditLogService.logOrderCancellation(before, order);
+                    log.info("[cancelOrder] Order ID: {} cancelled by owner user ID: {}", orderId, user.getId());
+                    return saved;
                 }
             }
         }
+        log.warn("[cancelOrder] Access denied to cancel order ID: {} for user ID: {}", orderId, user.getId());
         throw new AccessDeniedException("Order not found for this client");
     }
 
     private void checkCartStock(Cart cart) {
+        log.info("[checkCartStock] Checking stock availability for cart ID: {}", cart.getId());
         for (CartItem item : cart.getItems()) {
             Product product = item.getProduct();
             int availableStock = stockService.getStockById(product.getId()).quantity();
             if (item.getQuantity() > availableStock) {
                 int exceededAmount = item.getQuantity() - availableStock;
+                log.warn("[checkCartStock] Insufficient stock for product '{}' (ID: {}). Requested: {}, Available: {}",
+                        product.getName(), product.getId(), item.getQuantity(), availableStock);
                 throw new OutOfStockException(
                         "The order for product " + product.getName() + " by brand: " + product.getBrand()
                                 + " exceeds the available stock by " + exceededAmount
@@ -145,6 +185,7 @@ public class OrderService {
     }
 
     private Set<OrderItem> convertCartItemsToOrderItems(Set<CartItem> cartItems) {
+        log.info("[convertCartItemsToOrderItems] Converting {} cart item(s) to order item(s)", cartItems.size());
         Set<OrderItem> items = new HashSet<OrderItem>();
 
         for (CartItem cartItem : cartItems) {
